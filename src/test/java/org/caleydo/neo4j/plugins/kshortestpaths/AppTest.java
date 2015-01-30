@@ -9,11 +9,10 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.FileUtils;
-import org.caleydo.neo4j.plugins.kshortestpaths.KShortestPaths;
-import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -149,7 +148,7 @@ public class AppTest extends TestCase {
 
 		KShortestPaths sp = new KShortestPaths();
 		String script = "var propertyCosts = { size: { big: 2.0, small: 1.0 }, mood: { good: 2.0, bad: 1.0 } }; function getCost(properties) { var totalCost = 1.0; properties.forEach(function (propObject) { var property = propObject[0]; var value = propObject[1]; var propDef = propertyCosts[property]; if (typeof propDef != \"undefined\") { var cost = propDef[value]; if (typeof cost != \"undefined\") { totalCost += cost; } } }); return totalCost; }";
-		Iterable<WeightedPath> paths = sp.kShortestPaths(graphDb, a, g, 100, script, false);
+		Iterable<Path> paths = sp.kShortestPaths(graphDb, a, g, 100, script, false);
 		Transaction tx_verify = graphDb.beginTx();
 
 		printPaths(paths);
@@ -173,13 +172,13 @@ public class AppTest extends TestCase {
 		// Assert.assertEquals("Result isn't true", shortestPaths, Arrays.asList(Arrays.asList(n1, n2, n3)));
 	}
 
-	private void printPaths(Iterable<WeightedPath> paths) {
+	private void printPaths(Iterable<Path> paths) {
 		// StringBuilder b = new StringBuilder("Path 1 (" + path.weight() + "): ");
 		// for (Node n : path.nodes()) {
 		// b.append(n.getProperty("name")).append("-");
 		// }
 		int i = 1;
-		for (WeightedPath path : paths) {
+		for (Path path : paths) {
 			System.out.println(i++ + ": " + path.toString());
 		}
 

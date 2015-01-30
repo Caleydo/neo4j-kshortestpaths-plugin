@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.graphalgo.CostEvaluator;
-import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.PathExpanders;
 import org.neo4j.graphdb.Transaction;
@@ -22,7 +22,7 @@ public class KShortestPaths extends ServerPlugin {
 
 	@Description("get the k shortest paths from source to target")
 	@PluginTarget(GraphDatabaseService.class)
-	public Iterable<WeightedPath> kShortestPaths(
+	public Iterable<Path> kShortestPaths(
 			@Source GraphDatabaseService graphDb,
 			@Description("Source node of the path") @Parameter(name = "source") Node source,
 			@Description("Target node of the path") @Parameter(name = "target") Node target,
@@ -34,7 +34,7 @@ public class KShortestPaths extends ServerPlugin {
 			@Description("Determines, whether the edge direction is considered") @Parameter(name = "ignoreDirection", optional = true) Boolean ignoreDirection) {
 
 		PathExpander<?> expander;
-		List<WeightedPath> paths = new ArrayList<>();
+		List<Path> paths = new ArrayList<>();
 		if (ignoreDirection == null || !ignoreDirection) {
 			expander = PathExpanders.forDirection(Direction.OUTGOING);
 		} else {

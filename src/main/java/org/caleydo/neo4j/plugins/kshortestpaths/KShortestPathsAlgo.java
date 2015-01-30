@@ -22,6 +22,7 @@ import org.neo4j.graphalgo.impl.util.PathImpl.Builder;
 import org.neo4j.graphalgo.impl.util.WeightedPathImpl;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Relationship;
 
@@ -67,10 +68,10 @@ public class KShortestPathsAlgo {
 		this.shortestPathFinder = GraphAlgoFactory.dijkstra(expander, this.costEvaluator);
 	}
 
-	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k) {
+	public List<Path> run(Node sourceNode, Node targetNode, int k) {
 
 		// Calculate shortest path first
-		List<WeightedPath> paths = new ArrayList<>(k);
+		List<Path> paths = new ArrayList<>(k);
 		WeightedPath shortestPath = shortestPathFinder.findSinglePath(sourceNode, targetNode);
 		if (shortestPath == null)
 			return paths;
@@ -91,7 +92,7 @@ public class KShortestPathsAlgo {
 
 		for (int i = 1; i < k; i++) {
 
-			WeightedPath prevPath = paths.get(i - 1);
+			WeightedPath prevPath = (WeightedPath) paths.get(i - 1);
 
 			for (Node spurNode : prevPath.nodes()) {
 				if (spurNode.getId() == prevPath.endNode().getId())
@@ -99,7 +100,7 @@ public class KShortestPathsAlgo {
 
 				WeightedPath rootPath = getSubPathTo(prevPath, spurNode);
 
-				for (WeightedPath path : paths) {
+				for (Path path : paths) {
 					Iterator<Relationship> pathIterator = path.relationships().iterator();
 					boolean containsRootPath = true;
 
