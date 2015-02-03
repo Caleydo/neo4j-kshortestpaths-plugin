@@ -6,7 +6,9 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -35,6 +37,7 @@ public class EdgePropertyCostEvaluator implements CostEvaluator<Double> {
 
 	private ScriptEngine engine;
 	private boolean useFixedCost;
+	private Map<Long, Double> costCache = new HashMap<>();
 
 	public EdgePropertyCostEvaluator(String costFunction) {
 		if (costFunction == null) {
@@ -64,6 +67,9 @@ public class EdgePropertyCostEvaluator implements CostEvaluator<Double> {
 			return FIXED_COST;
 		} else {
 
+			Double c = costCache.get(relationship.getId());
+			if (c != null)
+				return c;
 			// evaluate script
 			try {
 
@@ -96,8 +102,10 @@ public class EdgePropertyCostEvaluator implements CostEvaluator<Double> {
 
 				Object cost = inv.invokeFunction("getCost", new Object[] { properties.toArray() });
 
-				if (cost instanceof Double)
+				if (cost instanceof Double) {
+					costCache.put(relationship.getId(), (Double) cost);
 					return (Double) cost;
+				}
 			} catch (ScriptException e) {
 				e.printStackTrace();
 			} catch (NoSuchMethodException e) {
