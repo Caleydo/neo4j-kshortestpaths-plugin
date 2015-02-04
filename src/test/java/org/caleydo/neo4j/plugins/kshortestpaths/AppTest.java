@@ -17,6 +17,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.server.rest.repr.Representation;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 /**
@@ -148,10 +149,10 @@ public class AppTest extends TestCase {
 
 		KShortestPaths sp = new KShortestPaths();
 		String script = "var propertyCosts = { size: { big: 2.0, small: 1.0 }, mood: { good: 2.0, bad: 1.0 } }; function getCost(properties) { var totalCost = 1.0; properties.forEach(function (propObject) { var property = propObject[0]; var value = propObject[1]; var propDef = propertyCosts[property]; if (typeof propDef != \"undefined\") { var cost = propDef[value]; if (typeof cost != \"undefined\") { totalCost += cost; } } }); return totalCost; }";
-		Iterable<Path> paths = sp.kShortestPaths(graphDb, a, g, 100, script, false);
+		Representation paths = sp.kShortestPaths(graphDb, a, g, 100, script, false);
 		Transaction tx_verify = graphDb.beginTx();
 
-		printPaths(paths);
+		// printPaths(paths);
 		Assert.assertTrue(true);
 		tx_verify.close();
 

@@ -68,10 +68,10 @@ public class KShortestPathsAlgo {
 		this.shortestPathFinder = GraphAlgoFactory.dijkstra(expander, this.costEvaluator);
 	}
 
-	public List<Path> run(Node sourceNode, Node targetNode, int k) {
+	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k) {
 
 		// Calculate shortest path first
-		List<Path> paths = new ArrayList<>(k);
+		List<WeightedPath> paths = new ArrayList<>(k);
 		WeightedPath shortestPath = shortestPathFinder.findSinglePath(sourceNode, targetNode);
 		if (shortestPath == null)
 			return paths;
@@ -92,7 +92,7 @@ public class KShortestPathsAlgo {
 
 		for (int i = 1; i < k; i++) {
 
-			WeightedPath prevPath = (WeightedPath) paths.get(i - 1);
+			WeightedPath prevPath = paths.get(i - 1);
 
 			for (Node spurNode : prevPath.nodes()) {
 				if (spurNode.getId() == prevPath.endNode().getId())
