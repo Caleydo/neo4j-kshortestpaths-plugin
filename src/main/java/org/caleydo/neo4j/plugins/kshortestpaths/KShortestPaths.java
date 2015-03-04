@@ -79,7 +79,7 @@ public class KShortestPaths extends ServerPlugin {
 		return ValueRepresentation.string(resJSON);
 	}
 
-	private Map<String, Object> getPathAsMap(WeightedPath path) {
+	static  Map<String, Object> getPathAsMap(WeightedPath path) {
 		Map<String, Object> p = new HashMap<>();
 		p.put("weight", path.weight());
 
@@ -97,7 +97,7 @@ public class KShortestPaths extends ServerPlugin {
 		return p;
 	}
 
-	private Map<String, Object> getNodeAsMap(Node node) {
+	static  Map<String, Object> getNodeAsMap(Node node) {
 		Map<String, Object> n = new HashMap<>();
 		n.put("id", node.getId());
 		n.put("labels", getNodeLabels(node));
@@ -105,7 +105,7 @@ public class KShortestPaths extends ServerPlugin {
 		return n;
 	}
 
-	private Map<String, Object> getRelationshipAsMap(Relationship relationship) {
+	static  Map<String, Object> getRelationshipAsMap(Relationship relationship) {
 		Map<String, Object> r = new HashMap<>();
 		r.put("id", relationship.getId());
 		r.put("type", relationship.getType().name());
@@ -116,7 +116,7 @@ public class KShortestPaths extends ServerPlugin {
 		return r;
 	}
 
-	private List<String> getNodeLabels(Node node) {
+	static  List<String> getNodeLabels(Node node) {
 		List<String> list = new ArrayList<>();
 		for (Label label : node.getLabels()) {
 			list.add(label.name());
@@ -124,7 +124,7 @@ public class KShortestPaths extends ServerPlugin {
 		return list;
 	}
 
-	private Map<String, Object> getPropertyMap(PropertyContainer container) {
+	static Map<String, Object> getPropertyMap(PropertyContainer container) {
 		Map<String, Object> properties = new HashMap<>();
 		for (String key : container.getPropertyKeys()) {
 			properties.put(key, container.getProperty(key));

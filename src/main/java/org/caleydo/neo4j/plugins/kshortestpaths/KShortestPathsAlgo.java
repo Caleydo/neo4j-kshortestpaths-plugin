@@ -67,8 +67,11 @@ public class KShortestPathsAlgo {
 		this.originalCostEvaluator = costEvaluator;
 		this.shortestPathFinder = GraphAlgoFactory.dijkstra(expander, this.costEvaluator);
 	}
-
 	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k) {
+		return run(sourceNode, targetNode, k, null);
+	}
+
+	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k, IPathReadyListener onPathReady) {
 
 		// Calculate shortest path first
 		List<WeightedPath> paths = new ArrayList<>(k);
@@ -86,6 +89,9 @@ public class KShortestPathsAlgo {
 
 		Set<Integer> pathCandidateHashes = new HashSet<>();
 
+		if (onPathReady != null) {
+			onPathReady.onPathReady(shortestPath);
+		}
 		paths.add(shortestPath);
 
 		pathCandidateHashes.add(generatePathHash(shortestPath));
@@ -155,7 +161,11 @@ public class KShortestPathsAlgo {
 			if (pathCandidates.isEmpty())
 				break;
 
-			paths.add(pathCandidates.poll());
+			WeightedPath nextBest = pathCandidates.poll();
+			if (onPathReady != null) {
+				onPathReady.onPathReady(nextBest);
+			}
+			paths.add(nextBest);
 
 		}
 
@@ -209,5 +219,9 @@ public class KShortestPathsAlgo {
 		}
 		return new WeightedPathImpl(originalCostEvaluator, pathBuilder.build());
 
+	}
+	
+	public static interface IPathReadyListener {
+		void onPathReady(WeightedPath path);
 	}
 }
