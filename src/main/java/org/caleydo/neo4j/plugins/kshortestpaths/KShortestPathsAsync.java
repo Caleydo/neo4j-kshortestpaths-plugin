@@ -76,13 +76,19 @@ public class KShortestPathsAsync {
         		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
         		
         		final Gson gson = new Gson();
-        		algo.run(source, target, k, new IPathReadyListener() {
+        		algo.run(source, target, k == null ? 1 : k.intValue(), new IPathReadyListener() {
 
 					@Override
 					public void onPathReady(WeightedPath path) {
 						Map<String, Object> repr = KShortestPaths.getPathAsMap(path);
 						gson.toJson(repr, Map.class, writer);
-					}        			
+						try {
+							writer.flush();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
         		});
 
         		tx.success();
