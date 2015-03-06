@@ -43,7 +43,8 @@ public class KShortestPathsAsync {
 
 	@GET
     @Path("/{from}/{to}")
-    public Response findColleagues(@PathParam("from") final String from, @PathParam("to") final String to, final @QueryParam("k") Integer k, final @QueryParam("costFunction") String costFunction, final @QueryParam("ignoreDirection") Boolean ignoreDirection )
+    public Response findColleagues(@PathParam("from") final String from, @PathParam("to") final String to, final @QueryParam("k") Integer k, final @QueryParam("costFunction") String costFunction, 
+    		final @QueryParam("ignoreDirection") Boolean ignoreDirection, final @QueryParam("edgeTypes") String edgeTypes  )
     {
 		
         StreamingOutput stream = new StreamingOutput()
@@ -54,7 +55,8 @@ public class KShortestPathsAsync {
             	final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
             	writer.beginArray();
             	
-            	PathExpander<?> expander;
+            	String[] edgeTypes_ = edgeTypes == null ? new String[0] : edgeTypes.split(",");
+            	PathExpander<?> expander = KShortestPaths.toExpander(ignoreDirection, edgeTypes_);
         		// paths = new ArrayList<>();
         		if (ignoreDirection == null || !ignoreDirection) {
         			expander = PathExpanders.forDirection(Direction.OUTGOING);

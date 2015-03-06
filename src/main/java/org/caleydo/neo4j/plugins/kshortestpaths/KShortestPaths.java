@@ -8,10 +8,12 @@ import java.util.Map;
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
+import org.neo4j.graphdb.PathExpanderBuilder;
 import org.neo4j.graphdb.PathExpanders;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
@@ -40,21 +42,11 @@ public class KShortestPaths extends ServerPlugin {
 			// @Description("Cost for an edge (>0)") @Parameter(name = "baseCost", optional = true) Double baseCost,
 			// @Description("Map of property costs (property name : cost)") @Parameter(name = "propertyCosts", optional
 			// = true) Map<String, Double> propertyCosts,
-			@Description("Determines, whether the edge direction is considered") @Parameter(name = "ignoreDirection", optional = true) Boolean ignoreDirection) {
+			@Description("Determines, whether the edge direction is considered") @Parameter(name = "ignoreDirection", optional = true) Boolean ignoreDirection,
+			@Description("The edge types to consider") @Parameter(name = "edgeTypes", optional = true) String[] edgeTypes
+			) {
 
-		PathExpander<?> expander;
-		// paths = new ArrayList<>();
-		if (ignoreDirection == null || !ignoreDirection) {
-			expander = PathExpanders.forDirection(Direction.OUTGOING);
-		} else {
-			expander = PathExpanders.allTypesAndDirections();
-			//
-			// PathExpanderBuilder expanderBuilder = PathExpanderBuilder.empty();
-			// for (int i = 0; i < types.length; i++) {
-			// expanderBuilder = expanderBuilder.add(DynamicRelationshipType.withName(types[i]));
-			// }
-			// expander = expanderBuilder.build();
-		}
+		PathExpander<?> expander = toExpander(ignoreDirection, edgeTypes);
 
 		Transaction tx = graphDb.beginTx();
 
@@ -77,6 +69,22 @@ public class KShortestPaths extends ServerPlugin {
 
 		String resJSON = gson.toJson(pathList, pathList.getClass());
 		return ValueRepresentation.string(resJSON);
+	}
+
+	static PathExpander<?> toExpander(Boolean ignoreDirection, String[] edgeTypes) {
+		PathExpander<?> expander;
+		boolean ignore = ignoreDirection != null && ignoreDirection.booleanValue();
+		Direction dir = ignore ? Direction.BOTH : Direction.OUTGOING;
+		if (edgeTypes != null && edgeTypes.length > 0) {			
+			PathExpanderBuilder expanderBuilder = PathExpanderBuilder.empty();
+			for(String type : edgeTypes) {
+				expanderBuilder.add(DynamicRelationshipType.withName(type), dir);
+			}
+			expander = expanderBuilder.build();
+		} else{
+			expander = PathExpanders.forDirection(dir);
+		}
+		return expander;
 	}
 
 	static  Map<String, Object> getPathAsMap(WeightedPath path) {
