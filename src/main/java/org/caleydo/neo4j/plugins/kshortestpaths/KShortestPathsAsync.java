@@ -43,7 +43,7 @@ public class KShortestPathsAsync {
 
 	@GET
     @Path("/{from}/{to}")
-    public Response findColleagues(@PathParam("from") final String from, @PathParam("to") final String to, final @QueryParam("k") Integer k, final @QueryParam("costFunction") String costFunction, 
+    public Response findColleagues(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k, final @QueryParam("costFunction") String costFunction, 
     		final @QueryParam("ignoreDirection") Boolean ignoreDirection, final @QueryParam("edgeTypes") String edgeTypes  )
     {
 		
@@ -75,12 +75,12 @@ public class KShortestPathsAsync {
         			tx = graphDb.beginTx();
         		
         		
-	        		final Node source = findById(from,tx); //graphDb.getNodeById(from);
+	        		final Node source = graphDb.getNodeById(from); //findById(from,tx);
 	        		if (source == null) {
 	        			writer.value("invalid source id "+from);
 	        			return;
 	        		}
-	        		final Node target = findById(to, tx);
+	        		final Node target = graphDb.getNodeById(to); //findById(to, tx);
 
 	        		if (target == null) {
 	        			writer.value("invalid target id "+to);
