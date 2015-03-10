@@ -5,19 +5,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
-import org.neo4j.graphdb.PathExpanderBuilder;
-import org.neo4j.graphdb.PathExpanders;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.Predicate;
+import org.neo4j.kernel.StandardExpander;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -43,10 +43,11 @@ public class KShortestPaths extends ServerPlugin {
 			// @Description("Map of property costs (property name : cost)") @Parameter(name = "propertyCosts", optional
 			// = true) Map<String, Double> propertyCosts,
 			@Description("Determines, whether the edge direction is considered") @Parameter(name = "ignoreDirection", optional = true) Boolean ignoreDirection,
-			@Description("The edge types to consider") @Parameter(name = "edgeTypes", optional = true) String[] edgeTypes
+			@Description("The node properties to filter") @Parameter(name = "nodeFilter", optional = true) Map<String,Object> nodeFilter, 
+			@Description("The relationship properties to filter") @Parameter(name = "relationshipFilter", optional = true) Map<String,Object> edgeFilter
 			) {
 
-		PathExpander<?> expander = toExpander(ignoreDirection, edgeTypes);
+		PathExpander<?> expander = toExpander(ignoreDirection, nodeFilter, edgeFilter);
 
 		Transaction tx = graphDb.beginTx();
 
@@ -71,20 +72,36 @@ public class KShortestPaths extends ServerPlugin {
 		return ValueRepresentation.string(resJSON);
 	}
 
-	static PathExpander<?> toExpander(Boolean ignoreDirection, String[] edgeTypes) {
-		PathExpander<?> expander;
+	static PathExpander<?> toExpander(Boolean ignoreDirection, Map<String,Object> nodeProperties, Map<String,Object> edgeProperties) {
 		boolean ignore = ignoreDirection != null && ignoreDirection.booleanValue();
 		Direction dir = ignore ? Direction.BOTH : Direction.OUTGOING;
-		if (edgeTypes != null && edgeTypes.length > 0) {			
-			PathExpanderBuilder expanderBuilder = PathExpanderBuilder.empty();
-			for(String type : edgeTypes) {
-				expanderBuilder.add(DynamicRelationshipType.withName(type), dir);
-			}
-			expander = expanderBuilder.build();
-		} else{
-			expander = PathExpanders.forDirection(dir);
+		System.out.println("direction: "+dir);
+		StandardExpander expander = StandardExpander.create(dir);
+		if (nodeProperties != null && !nodeProperties.isEmpty()) {
+			System.out.println("node filter: "+nodeProperties);
+			expander = expander.addNodeFilter(asPropertyFilter(nodeProperties));
+		}
+		if (edgeProperties != null && !edgeProperties.isEmpty()) {
+			System.out.println("edge filter: "+edgeProperties);
+			expander = expander.addRelationshipFilter(asPropertyFilter(edgeProperties));
 		}
 		return expander;
+	}
+
+	private static Predicate<? super PropertyContainer> asPropertyFilter(
+			final Map<String, Object> properties) {
+		return new Predicate<PropertyContainer>() {
+			@Override
+			public boolean accept(PropertyContainer item) {
+				for(Map.Entry<String,Object> prop : properties.entrySet()) {
+					Object value = item.getProperty(prop.getKey(), null);
+					if (!ObjectUtils.equals(value, prop.getValue())) {
+						return false;
+					}
+				}
+				return true;
+			}
+		};
 	}
 
 	static  Map<String, Object> getPathAsMap(WeightedPath path) {

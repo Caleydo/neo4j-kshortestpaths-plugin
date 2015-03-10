@@ -17,17 +17,16 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.caleydo.neo4j.plugins.kshortestpaths.KShortestPathsAlgo.IPathReadyListener;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
-import org.neo4j.cypher.javacompat.ExecutionResult;
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
-import org.neo4j.graphdb.PathExpanders;
 import org.neo4j.graphdb.Transaction;
+import org.parboiled.common.StringUtils;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonWriter;
 
 @Path("/kShortestPaths")
@@ -44,7 +43,7 @@ public class KShortestPathsAsync {
 	@GET
     @Path("/{from}/{to}")
     public Response findColleagues(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k, final @QueryParam("costFunction") String costFunction, 
-    		final @QueryParam("ignoreDirection") Boolean ignoreDirection, final @QueryParam("edgeTypes") String edgeTypes  )
+    		final @QueryParam("ignoreDirection") Boolean ignoreDirection, final @QueryParam("nodeFilter") String nodeFilter, final @QueryParam("relationshipFilter") String edgeFilter)
     {
 		
         StreamingOutput stream = new StreamingOutput()
@@ -55,21 +54,8 @@ public class KShortestPathsAsync {
             	final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
             	writer.beginArray();
             	
-            	String[] edgeTypes_ = edgeTypes == null ? new String[0] : edgeTypes.split(",");
-            	PathExpander<?> expander = KShortestPaths.toExpander(ignoreDirection, edgeTypes_);
-        		// paths = new ArrayList<>();
-        		if (ignoreDirection == null || !ignoreDirection) {
-        			expander = PathExpanders.forDirection(Direction.OUTGOING);
-        		} else {
-        			expander = PathExpanders.allTypesAndDirections();
-        			//
-        			// PathExpanderBuilder expanderBuilder = PathExpanderBuilder.empty();
-        			// for (int i = 0; i < types.length; i++) {
-        			// expanderBuilder = expanderBuilder.add(DynamicRelationshipType.withName(types[i]));
-        			// }
-        			// expander = expanderBuilder.build();
-        		}
-
+            	PathExpander<?> expander = KShortestPaths.toExpander(ignoreDirection, toMap(nodeFilter), toMap(edgeFilter));
+        		
         		Transaction tx = null;
         		try {
         			tx = graphDb.beginTx();
@@ -126,12 +112,18 @@ public class KShortestPathsAsync {
         return Response.ok().entity( stream ).type( MediaType.APPLICATION_JSON ).build();
     }
 
-	protected Node findById(String from, Transaction tx) {
-		String q = "MATCH (p:_Network_Node {id: '"+from+"' }) RETURN p";
-		ExecutionResult result = executionEngine.execute( q );
-		for (Map<String, Object> row : result) {
-			return (Node)row.values().iterator().next();
+	private static Map<String, Object> toMap(String filter) {
+		if (StringUtils.isEmpty(filter)) {
+			return null;
 		}
-		return null;
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String,Object> r = new Gson().fromJson(filter, Map.class);
+			return r;
+		} catch(JsonSyntaxException e) {
+			e.printStackTrace();
+			System.err.println("cant convert given filter to a json map: "+filter);
+			return null;
+		}
 	}
 }
