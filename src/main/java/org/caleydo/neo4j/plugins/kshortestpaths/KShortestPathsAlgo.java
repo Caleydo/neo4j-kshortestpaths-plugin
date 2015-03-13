@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.GraphAlgoFactory;
 import org.neo4j.graphalgo.PathFinder;
@@ -72,13 +73,16 @@ public class KShortestPathsAlgo {
 	}
 
 	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k, IPathReadyListener onPathReady) {
-
+		StopWatch w = new StopWatch();
+		w.start();
+		
 		// Calculate shortest path first
 		List<WeightedPath> paths = new ArrayList<>(k);
+		profile("start", w);
 		WeightedPath shortestPath = shortestPathFinder.findSinglePath(sourceNode, targetNode);
 		if (shortestPath == null)
 			return paths;
-
+		profile("initial disjkra", w);
 		PriorityQueue<WeightedPath> pathCandidates = new PriorityQueue<WeightedPath>(20,
 				new Comparator<WeightedPath>() {
 					@Override
@@ -141,9 +145,9 @@ public class KShortestPathsAlgo {
 						}
 					}
 				}
-
+				profile("Find next path", w);
 				WeightedPath spurPath = shortestPathFinder.findSinglePath(spurNode, targetNode);
-
+				profile("Found next path", w);
 				if (spurPath != null && !Double.isInfinite(spurPath.weight())) {
 					WeightedPath pathCandidate = concatenate(rootPath, spurPath);
 					Integer pathHash = generatePathHash(pathCandidate);
@@ -168,10 +172,15 @@ public class KShortestPathsAlgo {
 			paths.add(nextBest);
 
 		}
-
+		profile("done", w);		
 		return paths;
 	}
 
+	private static void profile(String label, StopWatch w) {
+		w.split();
+		System.err.println(label+": "+w.toSplitString());
+		w.unsplit();
+	}
 	private WeightedPath getSubPathTo(WeightedPath sourcePath, Node endNode) {
 		if (endNode.getId() == sourcePath.startNode().getId()) {
 			return new WeightedPathImpl(originalCostEvaluator, PathImpl.singular(endNode));

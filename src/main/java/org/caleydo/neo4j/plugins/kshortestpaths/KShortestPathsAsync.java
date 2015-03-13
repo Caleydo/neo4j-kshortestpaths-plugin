@@ -32,12 +32,10 @@ import com.google.gson.stream.JsonWriter;
 @Path("/kShortestPaths")
 public class KShortestPathsAsync {
 	private final GraphDatabaseService graphDb;
-	private ExecutionEngine executionEngine;
 
 	public KShortestPathsAsync(@Context GraphDatabaseService database,
 			@Context ExecutionEngine cypher) {
 		this.graphDb = database;
-        this.executionEngine = new ExecutionEngine( graphDb );
 	}
 
 	@GET

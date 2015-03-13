@@ -17,7 +17,6 @@ import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.kernel.StandardExpander;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -76,14 +75,14 @@ public class KShortestPaths extends ServerPlugin {
 		boolean ignore = ignoreDirection != null && ignoreDirection.booleanValue();
 		Direction dir = ignore ? Direction.BOTH : Direction.OUTGOING;
 		System.out.println("direction: "+dir);
-		StandardExpander expander = StandardExpander.create(dir);
+		CustomPathExpander expander = new CustomPathExpander(dir);
 		if (nodeProperties != null && !nodeProperties.isEmpty()) {
 			System.out.println("node filter: "+nodeProperties);
-			expander = expander.addNodeFilter(asPropertyFilter(nodeProperties));
+			expander.addPathFilter(CustomPathExpander.nodeFilter(asPropertyFilter(nodeProperties)));
 		}
 		if (edgeProperties != null && !edgeProperties.isEmpty()) {
 			System.out.println("edge filter: "+edgeProperties);
-			expander = expander.addRelationshipFilter(asPropertyFilter(edgeProperties));
+			expander.addPathFilter(CustomPathExpander.relationshipFilter(asPropertyFilter(edgeProperties)));
 		}
 		return expander;
 	}
