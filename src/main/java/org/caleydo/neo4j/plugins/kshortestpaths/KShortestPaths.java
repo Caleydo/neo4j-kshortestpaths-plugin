@@ -5,10 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -16,7 +14,6 @@ import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.helpers.Predicate;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -41,12 +38,10 @@ public class KShortestPaths extends ServerPlugin {
 			// @Description("Cost for an edge (>0)") @Parameter(name = "baseCost", optional = true) Double baseCost,
 			// @Description("Map of property costs (property name : cost)") @Parameter(name = "propertyCosts", optional
 			// = true) Map<String, Double> propertyCosts,
-			@Description("Determines, whether the edge direction is considered") @Parameter(name = "ignoreDirection", optional = true) Boolean ignoreDirection,
-			@Description("The node properties to filter") @Parameter(name = "nodeFilter", optional = true) Map<String,Object> nodeFilter, 
-			@Description("The relationship properties to filter") @Parameter(name = "relationshipFilter", optional = true) Map<String,Object> edgeFilter
+			@Description("constraints") @Parameter(name = "nodeFilter", optional = true) Map<String,Object> constraints
 			) {
 
-		PathExpander<?> expander = toExpander(ignoreDirection, nodeFilter, edgeFilter);
+		PathExpander<?> expander = toExpander(constraints);
 
 		Transaction tx = graphDb.beginTx();
 
@@ -71,37 +66,14 @@ public class KShortestPaths extends ServerPlugin {
 		return ValueRepresentation.string(resJSON);
 	}
 
-	static PathExpander<?> toExpander(Boolean ignoreDirection, Map<String,Object> nodeProperties, Map<String,Object> edgeProperties) {
-		boolean ignore = ignoreDirection != null && ignoreDirection.booleanValue();
-		Direction dir = ignore ? Direction.BOTH : Direction.OUTGOING;
-		System.out.println("direction: "+dir);
-		CustomPathExpander expander = new CustomPathExpander(dir);
-		if (nodeProperties != null && !nodeProperties.isEmpty()) {
-			System.out.println("node filter: "+nodeProperties);
-			expander.addPathFilter(CustomPathExpander.nodeFilter(asPropertyFilter(nodeProperties)));
-		}
-		if (edgeProperties != null && !edgeProperties.isEmpty()) {
-			System.out.println("edge filter: "+edgeProperties);
-			expander.addPathFilter(CustomPathExpander.relationshipFilter(asPropertyFilter(edgeProperties)));
-		}
-		return expander;
+	@SuppressWarnings("unchecked")
+	static PathExpander<?> toExpander(Map<String,Object> c) {
+		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
+		List<Map<String,Object>> nodeContraints= (List<Map<String, Object>>) (c == null ? null : c.get("node"));
+		List<Map<String,Object>> relConstraints= (List<Map<String, Object>>) (c == null ? null : c.get("rel"));
+		return new CustomPathExpander(directions, nodeContraints, relConstraints);
 	}
 
-	private static Predicate<? super PropertyContainer> asPropertyFilter(
-			final Map<String, Object> properties) {
-		return new Predicate<PropertyContainer>() {
-			@Override
-			public boolean accept(PropertyContainer item) {
-				for(Map.Entry<String,Object> prop : properties.entrySet()) {
-					Object value = item.getProperty(prop.getKey(), null);
-					if (!ObjectUtils.equals(value, prop.getValue())) {
-						return false;
-					}
-				}
-				return true;
-			}
-		};
-	}
 
 	static  Map<String, Object> getPathAsMap(WeightedPath path) {
 		Map<String, Object> p = new HashMap<>();

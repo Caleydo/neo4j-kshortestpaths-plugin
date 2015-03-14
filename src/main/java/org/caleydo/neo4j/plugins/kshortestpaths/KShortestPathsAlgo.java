@@ -131,7 +131,9 @@ public class KShortestPathsAlgo {
 					// If so, set edge weight of following edge in that path to infinity
 					if (containsRootPath) {
 						if (pathIterator.hasNext()) {
-							costEvaluator.addInvalidRelationship(pathIterator.next());
+							Relationship r= pathIterator.next();
+							costEvaluator.addInvalidRelationship(r);
+							profile("invalid: "+r,w);
 						}
 					}
 				}
@@ -143,6 +145,7 @@ public class KShortestPathsAlgo {
 						for (Relationship relationship : rootPathNode.getRelationships()) {
 							costEvaluator.addInvalidRelationship(relationship);
 						}
+						profile("invalids: "+rootPathNode.getRelationships(),w);
 					}
 				}
 				profile("Find next path", w);
@@ -166,6 +169,7 @@ public class KShortestPathsAlgo {
 				break;
 
 			WeightedPath nextBest = pathCandidates.poll();
+			profile("flush path", w);
 			if (onPathReady != null) {
 				onPathReady.onPathReady(nextBest);
 			}

@@ -41,7 +41,7 @@ public class KShortestPathsAsync {
 	@GET
     @Path("/{from}/{to}")
     public Response findColleagues(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k, final @QueryParam("costFunction") String costFunction, 
-    		final @QueryParam("ignoreDirection") Boolean ignoreDirection, final @QueryParam("nodeFilter") String nodeFilter, final @QueryParam("relationshipFilter") String edgeFilter)
+    		final @QueryParam("constraints") String contraints)
     {
 		
         StreamingOutput stream = new StreamingOutput()
@@ -52,7 +52,7 @@ public class KShortestPathsAsync {
             	final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
             	writer.beginArray();
             	
-            	PathExpander<?> expander = KShortestPaths.toExpander(ignoreDirection, toMap(nodeFilter), toMap(edgeFilter));
+            	PathExpander<?> expander = KShortestPaths.toExpander(toMap(contraints));
         		
         		Transaction tx = null;
         		try {

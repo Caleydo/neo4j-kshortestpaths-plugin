@@ -1,9 +1,11 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import org.neo4j.graphdb.Direction;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.NodeConstraints;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.RelConstraints;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
@@ -18,64 +20,44 @@ import org.neo4j.helpers.collection.FilteringIterable;
  *
  */
 public class CustomPathExpander implements PathExpander<Object> {
-	private final List<IPathFilter> pathFilters = new ArrayList<>();
-	private final Direction dir;
 	
-	
-	public CustomPathExpander(Direction dir) {
-		super();
-		this.dir = dir;
+	private final DirectionContraints directions;
+	private final NodeConstraints nodeConstraints;
+	private final RelConstraints relConstraints;
+
+	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints) {
+		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints));
 	}
 
-	public void addPathFilter(IPathFilter filter) {
-		this.pathFilters.add(filter);
+	public CustomPathExpander(DirectionContraints directions, NodeConstraints nodeContraints,RelConstraints relConstraints) {
+		super();
+		this.directions = directions;
+		this.nodeConstraints = nodeContraints;
+		this.relConstraints = relConstraints;
+		
 	}
 	
 	@Override
 	public Iterable<Relationship> expand(final Path path, BranchState<Object> state) {
+		final Predicate<Node> goodNode = this.nodeConstraints.prepare(path.nodes());
+		final Predicate<Relationship> goodRel = this.relConstraints.prepare(path.relationships());
 		final Node endNode = path.endNode();
-		
-		return new FilteringIterable<>(endNode.getRelationships(dir), new Predicate<Relationship>() {
+		return new FilteringIterable<>(this.directions.filter(endNode), new Predicate<Relationship>() {
 			@Override
 			public boolean accept(Relationship item) {
-				for(IPathFilter f : pathFilters) {
-					if (!f.accept(path, endNode, item)) {
-						return false;
-					}
+				if (!goodRel.accept(item)) {
+					return false;
 				}
-				return true;
+				Node added = item.getOtherNode(endNode);
+				return goodNode.accept(added);
 			}
 		});
 	}
 
 	@Override
 	public PathExpander<Object> reverse() {
-		return this;
+		return new CustomPathExpander(this.directions.reverse(), this.nodeConstraints, this.relConstraints);
 	}
 	
 	
-	public interface IPathFilter {
-		boolean accept(Path path, Node endNode, Relationship relationship);
-	}
-	
-	public static IPathFilter nodeFilter(final Predicate<? super Node> pred) {
-		return new IPathFilter() {
-			
-			@Override
-			public boolean accept(Path path, Node endNode, Relationship relationship) {
-				Node node = relationship.getOtherNode(endNode);
-				return pred.accept(node);
-			}
-		};
-	}
-	
-	public static IPathFilter relationshipFilter(final Predicate<? super Relationship> pred) {
-		return new IPathFilter() {
-			
-			@Override
-			public boolean accept(Path path, Node endNode, Relationship relationship) {
-				return pred.accept(relationship);
-			}
-		};
-	}
 }
