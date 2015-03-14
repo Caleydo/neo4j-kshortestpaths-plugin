@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.Predicates;
@@ -63,6 +64,15 @@ public class RelConstraints {
 	
 	public static interface IRelConstraint extends Predicate<Relationship> {
 		boolean times(int hits, int pathLength);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("[");
+		b.append(StringUtils.join(this.constraints, ","));
+		b.append("]");
+		return b.toString();
 	}
 
 }

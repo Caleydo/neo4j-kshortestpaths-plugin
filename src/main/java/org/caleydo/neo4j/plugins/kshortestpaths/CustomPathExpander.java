@@ -60,4 +60,15 @@ public class CustomPathExpander implements PathExpander<Object> {
 	}
 	
 	
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("CustomPathExpander {");
+		b.append("node: ").append(nodeConstraints);
+		b.append("rel: ").append(relConstraints);
+		b.append("dir: ").append(directions);
+		b.append('}');
+		return b.toString();
+	}
+	
 }

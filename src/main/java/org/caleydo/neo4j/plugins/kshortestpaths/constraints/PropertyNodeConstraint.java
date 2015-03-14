@@ -26,5 +26,15 @@ public class PropertyNodeConstraint extends TimeConstraint implements INodeConst
 	public boolean accept(Node item) {
 		return c.accept(item.getProperty(property));
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("{ prop:").append(property).append(' ');
+		b.append(c);
+		super.toString(b);
+		b.append("}");
+		return b.toString();
+	}
 
 }

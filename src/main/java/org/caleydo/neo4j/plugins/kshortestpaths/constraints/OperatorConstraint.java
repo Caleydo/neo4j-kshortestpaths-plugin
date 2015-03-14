@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.Predicates;
@@ -81,7 +81,13 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 			if (isArray(this.eq)) {
 				return Arrays.deepEquals((Object[])value, (Object[])this.eq);
 			}
-			return ObjectUtils.equals(value, this.eq);
+			return Objects.equals(value, this.eq);
+		}	
+
+		
+		@Override
+		public void toString(StringBuilder b) {
+			b.append(" eq:").append(Objects.toString(eq));
 		}
 		
 	}
@@ -99,15 +105,30 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 			if (isArray(value)) {
 				Object[] v = (Object[])value;
 				for(Object vi : v) {
-					if (ObjectUtils.equals(vi,  this.in)) {
+					if (Objects.equals(vi,  this.in)) {
 						return true;
 					}
 				}
 				return false;
 			}
 			//single value
-			return ObjectUtils.equals(value, this.in);
-		}
+			return Objects.equals(value, this.in);
+		}		
+
 		
+		@Override
+		public void toString(StringBuilder b) {
+			b.append(" contains:").append(isArray(in) ? Arrays.toString((Object[])in): Objects.toString(in));
+		}
 	}
+	
+	public abstract void toString(StringBuilder b);
+	
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		toString(b);
+		return b.toString();
+	}
+	
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Node;
@@ -90,6 +91,15 @@ public class DirectionContraints {
 			r.add(Pair.of(entry.first(), entry.other().reverse()));
 		}
 		return new DirectionContraints(r);
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("[");
+		b.append(StringUtils.join(this.filter, ","));
+		b.append("]");
+		return b.toString();
 	}
 
 }

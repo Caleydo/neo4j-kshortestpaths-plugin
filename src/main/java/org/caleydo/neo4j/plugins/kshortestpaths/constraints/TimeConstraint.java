@@ -22,4 +22,13 @@ public class TimeConstraint {
 		//at most not n times
 		return notHits <= -this.n;
 	}
+	
+	protected void toString(StringBuilder b) {
+		b.append(" times:");
+		if (n == Integer.MAX_VALUE) {
+			b.append("n");
+		} else {
+			b.append(n);
+		}
+	}
 }

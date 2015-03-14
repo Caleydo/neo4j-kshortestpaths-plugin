@@ -67,6 +67,7 @@ public class KShortestPathsAlgo {
 		this.costEvaluator = new InvalidRelationshipCostEvaluator(costEvaluator);
 		this.originalCostEvaluator = costEvaluator;
 		this.shortestPathFinder = GraphAlgoFactory.dijkstra(expander, this.costEvaluator);
+		System.out.println(expander);
 	}
 	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k) {
 		return run(sourceNode, targetNode, k, null);

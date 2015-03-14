@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.neo4j.graphdb.Node;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.Predicates;
@@ -63,6 +64,16 @@ public class NodeConstraints {
 	
 	public static interface INodeConstraint extends Predicate<Node> {
 		boolean times(int hits, int pathLength);
+	}
+	
+
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("[");
+		b.append(StringUtils.join(this.constraints, ","));
+		b.append("]");
+		return b.toString();
 	}
 
 }

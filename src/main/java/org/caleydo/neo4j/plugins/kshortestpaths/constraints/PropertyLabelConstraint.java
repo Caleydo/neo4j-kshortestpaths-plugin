@@ -24,5 +24,15 @@ public class PropertyLabelConstraint extends TimeConstraint implements IRelConst
 	public boolean accept(Relationship item) {
 		return c.accept(item.getType().name());
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("{ label ");
+		b.append(c);
+		super.toString(b);
+		b.append("}");
+		return b.toString();
+	}
 
 }

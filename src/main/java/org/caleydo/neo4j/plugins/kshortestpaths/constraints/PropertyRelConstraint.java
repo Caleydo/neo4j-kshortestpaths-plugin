@@ -26,5 +26,14 @@ public class PropertyRelConstraint extends TimeConstraint implements IRelConstra
 	public boolean accept(Relationship item) {
 		return c.accept(item.getProperty(property));
 	}
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("{ prop:").append(property).append(' ');
+		b.append(c);
+		super.toString(b);
+		b.append("}");
+		return b.toString();
+	}
 
 }

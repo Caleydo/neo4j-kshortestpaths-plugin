@@ -32,5 +32,14 @@ public class LabelConstraint extends TimeConstraint implements INodeConstraint {
 			};
 		}, item.getLabels()));
 	}
-
+	
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder();
+		b.append("{ labels ");
+		b.append(c);
+		super.toString(b);
+		b.append("}");
+		return b.toString();
+	}
 }
