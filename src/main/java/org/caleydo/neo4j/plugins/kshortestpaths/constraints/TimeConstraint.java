@@ -6,7 +6,7 @@ public class TimeConstraint {
 	public TimeConstraint(int n) {
 		this.n = n;
 	}
-	public TimeConstraint(Integer value) {
+	public TimeConstraint(Number value) {
 		this(value == null ? Integer.MAX_VALUE : value.intValue());
 	}
 

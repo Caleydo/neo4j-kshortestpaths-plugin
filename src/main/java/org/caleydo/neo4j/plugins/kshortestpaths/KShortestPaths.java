@@ -21,8 +21,10 @@ import org.neo4j.server.plugins.ServerPlugin;
 import org.neo4j.server.plugins.Source;
 import org.neo4j.server.rest.repr.Representation;
 import org.neo4j.server.rest.repr.ValueRepresentation;
+import org.parboiled.common.StringUtils;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 // START SNIPPET: ShortestPath
 public class KShortestPaths extends ServerPlugin {
@@ -38,7 +40,7 @@ public class KShortestPaths extends ServerPlugin {
 			// @Description("Cost for an edge (>0)") @Parameter(name = "baseCost", optional = true) Double baseCost,
 			// @Description("Map of property costs (property name : cost)") @Parameter(name = "propertyCosts", optional
 			// = true) Map<String, Double> propertyCosts,
-			@Description("constraints") @Parameter(name = "nodeFilter", optional = true) Map<String,Object> constraints
+			@Description("constraints") @Parameter(name = "constraints", optional = true) String constraints
 			) {
 
 		PathExpander<?> expander = toExpander(constraints);
@@ -66,12 +68,33 @@ public class KShortestPaths extends ServerPlugin {
 		return ValueRepresentation.string(resJSON);
 	}
 
+
+	static PathExpander<?> toExpander(String constraints) {
+		return toExpander(toMap(constraints));
+	}
 	@SuppressWarnings("unchecked")
 	static PathExpander<?> toExpander(Map<String,Object> c) {
 		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
 		List<Map<String,Object>> nodeContraints= (List<Map<String, Object>>) (c == null ? null : c.get("node"));
 		List<Map<String,Object>> relConstraints= (List<Map<String, Object>>) (c == null ? null : c.get("rel"));
 		return new CustomPathExpander(directions, nodeContraints, relConstraints);
+	}
+	
+
+
+	private static Map<String, Object> toMap(String filter) {
+		if (StringUtils.isEmpty(filter)) {
+			return null;
+		}
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String,Object> r = new Gson().fromJson(filter, Map.class);
+			return r;
+		} catch(JsonSyntaxException e) {
+			e.printStackTrace();
+			System.err.println("cant convert given filter to a json map: "+filter);
+			return null;
+		}
 	}
 
 

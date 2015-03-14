@@ -13,13 +13,13 @@ public class LabelConstraint extends TimeConstraint implements INodeConstraint {
 
 	private final Predicate<Object> c;
 
-	public LabelConstraint(Integer times, Predicate<Object> c) {
+	public LabelConstraint(Number times, Predicate<Object> c) {
 		super(times);
 		this.c = c;
 	}
 
 	public static LabelConstraint parse(Map<String, Object> desc) {
-		return new LabelConstraint((Integer) desc.get("times"),
+		return new LabelConstraint((Number) desc.get("times"),
 				OperatorConstraint.parse(desc));
 	}
 

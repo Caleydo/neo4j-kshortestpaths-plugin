@@ -23,10 +23,8 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Transaction;
-import org.parboiled.common.StringUtils;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonWriter;
 
 @Path("/kShortestPaths")
@@ -52,7 +50,7 @@ public class KShortestPathsAsync {
             	final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
             	writer.beginArray();
             	
-            	PathExpander<?> expander = KShortestPaths.toExpander(toMap(contraints));
+            	PathExpander<?> expander = KShortestPaths.toExpander(contraints);
         		
         		Transaction tx = null;
         		try {
@@ -109,19 +107,4 @@ public class KShortestPathsAsync {
 
         return Response.ok().entity( stream ).type( MediaType.APPLICATION_JSON ).build();
     }
-
-	private static Map<String, Object> toMap(String filter) {
-		if (StringUtils.isEmpty(filter)) {
-			return null;
-		}
-		try {
-			@SuppressWarnings("unchecked")
-			Map<String,Object> r = new Gson().fromJson(filter, Map.class);
-			return r;
-		} catch(JsonSyntaxException e) {
-			e.printStackTrace();
-			System.err.println("cant convert given filter to a json map: "+filter);
-			return null;
-		}
-	}
 }

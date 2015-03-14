@@ -11,14 +11,14 @@ public class PropertyRelConstraint extends TimeConstraint implements IRelConstra
 	private final Predicate<Object> c;
 	private final String property;
 
-	public PropertyRelConstraint(Integer times, String property, Predicate<Object> c) {
+	public PropertyRelConstraint(Number times, String property, Predicate<Object> c) {
 		super(times);
 		this.property = property;
 		this.c = c;
 	}
 
 	public static PropertyRelConstraint parse(String property, Map<String, Object> desc) {
-		return new PropertyRelConstraint((Integer) desc.get("times"), property,
+		return new PropertyRelConstraint((Number) desc.get("times"), property,
 				OperatorConstraint.parse(desc));
 	}
 
