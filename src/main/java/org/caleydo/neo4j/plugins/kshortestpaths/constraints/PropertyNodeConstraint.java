@@ -24,6 +24,9 @@ public class PropertyNodeConstraint extends TimeConstraint implements INodeConst
 
 	@Override
 	public boolean accept(Node item) {
+		if (!item.hasProperty(property)) {
+			return false;
+		}
 		return c.accept(item.getProperty(property));
 	}
 	

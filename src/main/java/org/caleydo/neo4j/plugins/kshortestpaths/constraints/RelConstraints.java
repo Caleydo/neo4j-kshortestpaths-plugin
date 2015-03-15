@@ -12,7 +12,15 @@ import org.neo4j.helpers.Predicates;
 public class RelConstraints {
 	private final IRelConstraint[] constraints;
 	public RelConstraints(List<Map<String, Object>> nodeContraints) {
-		this.constraints = parse(nodeContraints);
+		this(parse(nodeContraints));
+	}
+
+	private RelConstraints(IRelConstraint[] constraints) {
+		this.constraints = constraints;
+	}
+	
+	public static RelConstraints of(IRelConstraint ...constraints) {
+		return new RelConstraints(constraints);
 	}
 
 	private static IRelConstraint[] parse(List<Map<String, Object>> relConstraints) {
@@ -47,12 +55,13 @@ public class RelConstraints {
 					hits[i]++;
 		}
 		final int length = l+1; //added one new
+		//System.out.println("node: "+rels+" "+Arrays.toString(hits));
 		return new Predicate<Relationship>() {
 			@Override
 			public boolean accept(Relationship item) {
 				for(int i = 0; i < hits.length; ++i) {
 					int hit = hits[i];
-					if (!constraints[i].accept(item))
+					if (constraints[i].accept(item))
 						hit += 1;
 					if (!constraints[i].times(hit, length))
 						return false;

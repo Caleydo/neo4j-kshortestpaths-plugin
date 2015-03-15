@@ -46,10 +46,17 @@ public class CustomPathExpander implements PathExpander<Object> {
 			@Override
 			public boolean accept(Relationship item) {
 				if (!goodRel.accept(item)) {
+					//System.out.println("test: "+item+" bad rel");
 					return false;
 				}
 				Node added = item.getOtherNode(endNode);
-				return goodNode.accept(added);
+				boolean r= goodNode.accept(added);
+				//if (!r) {
+				//	System.out.println("test: "+added+" bad node");
+				//} else {
+				//	System.out.println("test: "+item+" "+added+" good");
+				//}
+				return r;
 			}
 		});
 	}

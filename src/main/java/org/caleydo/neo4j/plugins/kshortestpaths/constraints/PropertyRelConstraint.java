@@ -24,6 +24,9 @@ public class PropertyRelConstraint extends TimeConstraint implements IRelConstra
 
 	@Override
 	public boolean accept(Relationship item) {
+		if (!item.hasProperty(property)) {
+			return false;
+		}
 		return c.accept(item.getProperty(property));
 	}
 	@Override

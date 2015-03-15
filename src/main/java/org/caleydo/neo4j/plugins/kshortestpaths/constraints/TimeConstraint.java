@@ -17,7 +17,7 @@ public class TimeConstraint {
 			return hits == 0;
 		}
 		if (this.n > 0) { //at most n times
-			return hits <= this.n;
+			return this.n == Integer.MAX_VALUE ? notHits == 0 : hits <= this.n;
 		}
 		//at most not n times
 		return notHits <= -this.n;

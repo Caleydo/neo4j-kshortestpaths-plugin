@@ -12,7 +12,15 @@ import org.neo4j.helpers.Predicates;
 public class NodeConstraints {
 	private final INodeConstraint[] constraints;
 	public NodeConstraints(List<Map<String, Object>> nodeContraints) {
-		this.constraints = parse(nodeContraints);
+		this(parse(nodeContraints));
+	}
+
+	private NodeConstraints(INodeConstraint[] constraints) {
+		this.constraints = constraints;
+	}
+	
+	public static NodeConstraints of(INodeConstraint ...constraints) {
+		return new NodeConstraints(constraints);
 	}
 
 	private static INodeConstraint[] parse(List<Map<String, Object>> nodeContraints) {
@@ -47,12 +55,13 @@ public class NodeConstraints {
 					hits[i]++;
 		}
 		final int length = l+1; //added one new
+		//System.out.println("node: "+nodes+" "+Arrays.toString(hits));
 		return new Predicate<Node>() {
 			@Override
 			public boolean accept(Node item) {
 				for(int i = 0; i < hits.length; ++i) {
 					int hit = hits[i];
-					if (!constraints[i].accept(item))
+					if (constraints[i].accept(item))
 						hit += 1;
 					if (!constraints[i].times(hit, length))
 						return false;

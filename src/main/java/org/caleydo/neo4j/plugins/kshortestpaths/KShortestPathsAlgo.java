@@ -134,7 +134,7 @@ public class KShortestPathsAlgo {
 						if (pathIterator.hasNext()) {
 							Relationship r= pathIterator.next();
 							costEvaluator.addInvalidRelationship(r);
-							profile("invalid: "+r,w);
+							//profile("invalid: "+r,w);
 						}
 					}
 				}
@@ -146,7 +146,7 @@ public class KShortestPathsAlgo {
 						for (Relationship relationship : rootPathNode.getRelationships()) {
 							costEvaluator.addInvalidRelationship(relationship);
 						}
-						profile("invalids: "+rootPathNode.getRelationships(),w);
+						//profile("invalids: "+rootPathNode.getRelationships(),w);
 					}
 				}
 				profile("Find next path", w);
@@ -183,7 +183,7 @@ public class KShortestPathsAlgo {
 
 	private static void profile(String label, StopWatch w) {
 		w.split();
-		System.err.println(label+": "+w.toSplitString());
+		//System.err.println(label+": "+w.toSplitString());
 		w.unsplit();
 	}
 	private WeightedPath getSubPathTo(WeightedPath sourcePath, Node endNode) {

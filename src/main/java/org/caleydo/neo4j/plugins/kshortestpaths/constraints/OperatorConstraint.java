@@ -58,11 +58,19 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 			return Predicates.and(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
 		case "eq":
 		case "equal":
-			return new EqualPredicate(desc);
+			return eq(desc);
 		case "contains":
-			return new ContainsPredicate(desc);
+			return contains(desc);
 		}
 		return null;
+	}
+
+	public static ContainsPredicate contains(Object value) {
+		return new ContainsPredicate(value);
+	}
+
+	public static EqualPredicate eq(Object value) {
+		return new EqualPredicate(value);
 	}
 	
 	static class EqualPredicate extends OperatorConstraint {

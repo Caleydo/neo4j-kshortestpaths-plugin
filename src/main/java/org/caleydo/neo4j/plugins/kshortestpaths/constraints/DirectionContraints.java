@@ -31,6 +31,18 @@ public class DirectionContraints {
 		}
 		return r;
 	}
+	
+	public static DirectionContraints of(String label, Direction dir) {
+		List<Pair<? extends RelationshipType,Direction>> r = new ArrayList<>();
+		r.add(Pair.of(DynamicRelationshipType.withName(label), dir));
+		return new DirectionContraints(r);
+	}
+	public static DirectionContraints of(String label, Direction dir, String label2, Direction dir2) {
+		List<Pair<? extends RelationshipType,Direction>> r = new ArrayList<>();
+		r.add(Pair.of(DynamicRelationshipType.withName(label), dir));
+		r.add(Pair.of(DynamicRelationshipType.withName(label2), dir2));
+		return new DirectionContraints(r);
+	}
 
 	private static Direction toDir(String value) {
 		value = value.toLowerCase();
@@ -41,7 +53,7 @@ public class DirectionContraints {
 		return Direction.BOTH;
 	}
 
-	public DirectionContraints(List<Pair<? extends RelationshipType, Direction>> filter) {
+	private DirectionContraints(List<Pair<? extends RelationshipType, Direction>> filter) {
 		this.filter = filter;
 		this.allSameDir = areAllSameDir(filter);
 	}
