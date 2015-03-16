@@ -10,6 +10,7 @@ import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -98,10 +99,22 @@ public class KShortestPaths extends ServerPlugin {
 	}
 
 
+	static  Map<String, Object> getPathAsMap(Path path) {
+		Map<String, Object> p = new HashMap<>();
+		p.put("weight", path.length());
+
+		return toMap(path, p);
+	}
+	
 	static  Map<String, Object> getPathAsMap(WeightedPath path) {
 		Map<String, Object> p = new HashMap<>();
 		p.put("weight", path.weight());
 
+		return toMap(path, p);
+	}
+
+
+	public static Map<String, Object> toMap(Path path, Map<String, Object> p) {
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		for (Node node : path.nodes()) {
 			nodes.add(getNodeAsMap(node));

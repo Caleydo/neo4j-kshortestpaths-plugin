@@ -15,10 +15,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.caleydo.neo4j.plugins.kshortestpaths.KShortestPathsAlgo.IPathReadyListener;
+import org.caleydo.neo4j.plugins.kshortestpaths.KShortestPathsAlgo2.IPathReadyListener2;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
-import org.neo4j.graphalgo.CostEvaluator;
-import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
@@ -68,8 +66,8 @@ public class KShortestPathsAsync {
 	        			return;
 	        		}	        		
 	        		
+	        		/*
 	        		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(costFunction);
-	
 	        		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
 	        		
 	        		final Gson gson = new Gson();
@@ -79,6 +77,24 @@ public class KShortestPathsAsync {
 						public void onPathReady(WeightedPath path) {
 							Map<String, Object> repr = KShortestPaths.getPathAsMap(path);
 							gson.toJson(repr, Map.class, writer);
+							try {
+								writer.flush();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+	        		});
+	        		*/
+	        		KShortestPathsAlgo2 algo = new KShortestPathsAlgo2(expander);
+	        		
+	        		final Gson gson = new Gson();
+	        		algo.run(source, target, Integer.MAX_VALUE, k == null ? 1 : k.intValue(), new IPathReadyListener2() {
+	
+						@Override
+						public void onPathReady(org.neo4j.graphdb.Path path) {
+							Map<String, Object> repr = KShortestPaths.getPathAsMap(path);
+							gson.toJson(repr, Map.class, writer); 
 							try {
 								writer.flush();
 							} catch (IOException e) {
