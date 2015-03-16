@@ -209,7 +209,7 @@ public class AppTest extends TestCase {
 
 		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(null);
 
-		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, expander, costEvaluator);
+		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
 
 		List<WeightedPath> paths = algo.run(source, target, k);
 

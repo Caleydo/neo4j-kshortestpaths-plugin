@@ -24,7 +24,6 @@ import org.neo4j.graphalgo.impl.util.WeightedPathImpl;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Relationship;
 
 /**
@@ -36,7 +35,7 @@ public class KShortestPathsAlgo {
 	protected final PathFinder<? extends WeightedPath> shortestPathFinder;
 	protected final CostEvaluator<Double> originalCostEvaluator;
 	protected final InvalidRelationshipCostEvaluator costEvaluator;
-	private final IRelationshipResolver resolver;
+	private CustomPathExpander expander;
 
 	protected static class InvalidRelationshipCostEvaluator implements CostEvaluator<Double> {
 
@@ -64,8 +63,8 @@ public class KShortestPathsAlgo {
 
 	}
 
-	public KShortestPathsAlgo(PathExpander<?> expander, IRelationshipResolver resolver, CostEvaluator<Double> costEvaluator) {
-		this.resolver = resolver;
+	public KShortestPathsAlgo(CustomPathExpander expander, CostEvaluator<Double> costEvaluator) {
+		this.expander = expander;
 		this.costEvaluator = new InvalidRelationshipCostEvaluator(costEvaluator);
 		this.originalCostEvaluator = costEvaluator;
 		this.shortestPathFinder = GraphAlgoFactory.dijkstra(expander, this.costEvaluator);
@@ -143,14 +142,18 @@ public class KShortestPathsAlgo {
 
 				// Simulate removal of root path nodes (except spur node) by setting all their edge weights to
 				// infinity
+				Set<Long> badIds = new HashSet<Long>();
 				for (Node rootPathNode : rootPath.nodes()) {
 					if (rootPathNode.getId() != spurNode.getId()) {
-						for (Relationship relationship : getRelationships(rootPathNode)) {
-							costEvaluator.addInvalidRelationship(relationship);
-						}
+						badIds.add(rootPathNode.getId());
+						//for (Relationship relationship : getRelationships(rootPathNode)) {
+						//	costEvaluator.addInvalidRelationship(relationship);
+						//}
 						//profile("invalids: "+rootPathNode.getRelationships(),w);
 					}
 				}
+				expander.setExtraIgnoreNodes(badIds);
+
 				profile("Find next path", w);
 				WeightedPath spurPath = shortestPathFinder.findSinglePath(spurNode, targetNode);
 				profile("Found next path", w);
@@ -165,6 +168,7 @@ public class KShortestPathsAlgo {
 
 				// Restore edges
 				costEvaluator.clearInvalidRelationships();
+				expander.setExtraIgnoreNodes(null);
 
 			}
 
@@ -181,10 +185,6 @@ public class KShortestPathsAlgo {
 		}
 		profile("done", w);		
 		return paths;
-	}
-
-	private Iterable<Relationship> getRelationships(Node node) {
-		return resolver.getRelationships(node);
 	}
 	
 	private static void profile(String label, StopWatch w) {

@@ -48,7 +48,7 @@ public class KShortestPaths extends ServerPlugin {
 
 		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(costFunction);
 
-		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, expander, costEvaluator);
+		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
 
 		List<WeightedPath> paths = algo.run(source, target, k);
 

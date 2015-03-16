@@ -70,7 +70,7 @@ public class KShortestPathsAsync {
 	        		
 	        		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(costFunction);
 	
-	        		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, expander, costEvaluator);
+	        		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
 	        		
 	        		final Gson gson = new Gson();
 	        		algo.run(source, target, k == null ? 1 : k.intValue(), new IPathReadyListener() {

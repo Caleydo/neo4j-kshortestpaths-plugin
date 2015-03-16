@@ -35,7 +35,7 @@ public class InlineRelationships {
 	
 	@Override
 	public String toString() {
-		return "Inline: "+type.name();
+		return "Inline: "+type.name() + " un: "+undirectional+" not:"+notInlineId+" fac:"+factory;
 	}
 	
 	public Iterable<Relationship> inline(Iterable<Relationship> rels, final Node source) {
@@ -45,10 +45,11 @@ public class InlineRelationships {
 		Collection<Relationship> bad = new ArrayList<Relationship>();
 		MultiMap m = new MultiValueMap();
 		for (Relationship s : rels) {
-			if (s.isType(type) && s.getEndNode() == source && !skip(s.getOtherNode(source))) { //just incoming edges
+			//System.out.println(s+" "+s.getStartNode()+" "+s.getEndNode()+" "+s.getEndNode().equals(source));
+			if (s.isType(type) && s.getEndNode().equals(source) && !skip(s.getOtherNode(source))) { //just incoming edges
 				Node toInline = s.getOtherNode(source);
 				for(Relationship i : toInline.getRelationships(type)) {
-					if (i == s) {
+					if (i.equals(s)) {
 						continue;
 					}
 					m.put(i.getOtherNode(toInline), Pair.of(s, i));
@@ -65,6 +66,7 @@ public class InlineRelationships {
 		if (m.isEmpty()) { //nothing to do
 			return bad;
 		}
+		//System.out.println(m);
 		
 		@SuppressWarnings("unchecked")
 		Iterable<Relationship> inlined = Iterables.map(new Function<Map.Entry<Node,Collection<Pair<Relationship, Relationship>>>, Relationship>() {
@@ -118,20 +120,34 @@ public class InlineRelationships {
 		@Override
 		public Relationship create(Node source, Node target,
 				Collection<Pair<Relationship, Relationship>> inline, boolean reverse) {
+			
+			long id = FakeRelationship.id(reverse ? target : source, reverse ? source : target);
+			
 			Map<String,Object> properties = new HashMap<String, Object>();
 			properties.put(flag, true);
 			String[] r = new String[inline.size()];
+			if (cache.containsKey(id)) {
+				return cache.get(id);
+			}
+			
 			int i = 0;
 			for(Pair<Relationship, Relationship> p : inline) {
 				r[i++] = Objects.toString(p.first().getOtherNode(source).getProperty(aggregateInlined));
 			}
 			properties.put(aggregate, r);
+			
 			Relationship rel = new FakeRelationship(source.getGraphDatabase(),type, reverse ? target : source, reverse ? source : target, properties);
-			if (cache.containsKey(rel.getId())) {
-				return cache.get(rel.getId());
-			}
 			cache.put(rel.getId(), rel);
 			return rel;
 		}
+
+		@Override
+		public String toString() {
+			return "FakeSetRelationshipFactory [flag=" + flag + ", aggregate="
+					+ aggregate + ", aggregateInlined=" + aggregateInlined
+					+ ", type=" + type + "]";
+		}
+		
+		
 	}
 }

@@ -33,7 +33,7 @@ public class FakeRelationship implements Relationship {
 		this.properties = properties;
 	}
 
-	private static long id(Node s, Node t) {
+	public static long id(Node s, Node t) {
 		// heuristic combined both and negate
 		long id = (1 << 17)  + (s.getId() << 16) + t.getId();
 		return id;

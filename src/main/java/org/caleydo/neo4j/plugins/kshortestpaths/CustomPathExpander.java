@@ -3,6 +3,7 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
@@ -24,12 +25,14 @@ import org.neo4j.helpers.collection.FilteringIterable;
  * @author sam
  *
  */
-public class CustomPathExpander implements PathExpander<Object>, IRelationshipResolver {
+public class CustomPathExpander implements PathExpander<Object> {
 	
 	private final DirectionContraints directions;
 	private final NodeConstraints nodeConstraints;
 	private final RelConstraints relConstraints;
 	private final InlineRelationships inline;
+	
+	private Set<Long> extraIgnoreNodes;
 
 	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints, Map<String,Object> inline) {
 		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), of(inline));
@@ -59,6 +62,11 @@ public class CustomPathExpander implements PathExpander<Object>, IRelationshipRe
 		
 	}
 	
+	public void setExtraIgnoreNodes(Set<Long> extraIgnoreNodes) {
+		this.extraIgnoreNodes = extraIgnoreNodes;
+	}
+	
+	
 	@Override
 	public Iterable<Relationship> expand(final Path path, BranchState<Object> state) {
 		final Predicate<Node> goodNode = this.nodeConstraints.prepare(path.nodes());
@@ -73,6 +81,9 @@ public class CustomPathExpander implements PathExpander<Object>, IRelationshipRe
 					return false;
 				}
 				Node added = item.getOtherNode(endNode);
+				if (extraIgnoreNodes != null && extraIgnoreNodes.contains(added.getId())) {
+					return false;
+				}
 				boolean r= goodNode.accept(added);
 				//if (!r) {
 				//	System.out.println("test: "+added+" bad node");
@@ -84,7 +95,7 @@ public class CustomPathExpander implements PathExpander<Object>, IRelationshipRe
 		});
 	}
 
-	@Override
+
 	public Iterable<Relationship> getRelationships(final Node endNode) {
 		Iterable<Relationship> base = this.directions.filter(endNode);
 		if (inline != null) {
