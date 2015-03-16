@@ -21,7 +21,6 @@ import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Transaction;
 
 import com.google.gson.Gson;
@@ -50,7 +49,7 @@ public class KShortestPathsAsync {
             	final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
             	writer.beginArray();
             	
-            	PathExpander<?> expander = KShortestPaths.toExpander(contraints);
+            	CustomPathExpander expander = KShortestPaths.toExpander(contraints);
         		
         		Transaction tx = null;
         		try {
@@ -71,7 +70,7 @@ public class KShortestPathsAsync {
 	        		
 	        		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(costFunction);
 	
-	        		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
+	        		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, expander, costEvaluator);
 	        		
 	        		final Gson gson = new Gson();
 	        		algo.run(source, target, k == null ? 1 : k.intValue(), new IPathReadyListener() {

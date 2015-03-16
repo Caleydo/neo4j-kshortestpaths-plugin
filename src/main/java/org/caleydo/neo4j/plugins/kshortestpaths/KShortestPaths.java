@@ -10,7 +10,6 @@ import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -43,13 +42,13 @@ public class KShortestPaths extends ServerPlugin {
 			@Description("constraints") @Parameter(name = "constraints", optional = true) String constraints
 			) {
 
-		PathExpander<?> expander = toExpander(constraints);
+		CustomPathExpander expander = toExpander(constraints);
 
 		Transaction tx = graphDb.beginTx();
 
 		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(costFunction);
 
-		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
+		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, expander, costEvaluator);
 
 		List<WeightedPath> paths = algo.run(source, target, k);
 
@@ -69,11 +68,11 @@ public class KShortestPaths extends ServerPlugin {
 	}
 
 
-	static PathExpander<?> toExpander(String constraints) {
+	static CustomPathExpander toExpander(String constraints) {
 		return toExpander(toMap(constraints));
 	}
 	@SuppressWarnings("unchecked")
-	static PathExpander<?> toExpander(Map<String,Object> c) {
+	static CustomPathExpander toExpander(Map<String,Object> c) {
 		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
 		List<Map<String,Object>> nodeContraints= (List<Map<String, Object>>) (c == null ? null : c.get("node"));
 		List<Map<String,Object>> relConstraints= (List<Map<String, Object>>) (c == null ? null : c.get("rel"));

@@ -2,7 +2,6 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -12,6 +11,8 @@ import junit.framework.TestSuite;
 
 import org.apache.commons.io.FileUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.FakeSetRelationshipFactory;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.NodeConstraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.OperatorConstraint;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PropertyRelConstraint;
@@ -23,12 +24,12 @@ import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.tooling.GlobalGraphOperations;
 
 /**
@@ -48,6 +49,11 @@ public class AppTest extends TestCase {
 	public Node _5 = null;
 	public Node _6 = null;
 	public Node _7 = null;
+	
+
+	RelationshipType consistsOf = DynamicRelationshipType.withName("consistsOf");
+	RelationshipType to = DynamicRelationshipType.withName("to");
+	
 	/**
 	 * Create the test case
 	 *
@@ -115,19 +121,14 @@ public class AppTest extends TestCase {
 			u = createSetNode("U");
 			t = createSetNode("T");
 			
-			RelationshipType consistsOf = DynamicRelationshipType.withName("consistsOf");
-			RelationshipType to = DynamicRelationshipType.withName("to");
 			
 			
 			partOf(s,consistsOf,_0,_1,_2,_7);
-			product(to, _0,_2,_7);
 			
 			
 			partOf(u,consistsOf,_5,_6);
-			product(to, _5,_6);
 			
 			partOf(t,consistsOf,_3,_4,_7);
-			product(to, _3,_4,_7);
 			_7.setProperty("sets", new String[] { "S", "T" });
 
 			_3.createRelationshipTo(_6,to).setProperty("isNet", true);
@@ -136,15 +137,25 @@ public class AppTest extends TestCase {
 			_2.createRelationshipTo(_4,to).setProperty("isNet", true);
 			
 			//double meaning isNet and isSet
-			Relationship r= _1.createRelationshipTo(_1,to);
+			Relationship r= _0.createRelationshipTo(_1,to);
 			r.setProperty("isNet", true);
 			r.setProperty("isSet", true);
+			r.setProperty("sets",new String[]{s.getProperty("name").toString()});
 			
-			for(Node n:  Arrays.asList(_0,_2,_7))
-				_1.createRelationshipTo(n,to).setProperty("isSet", true);
-			for(Node n:  Arrays.asList(_2,_7))
-				n.createRelationshipTo(_1,to).setProperty("isSet", true);
-			
+//			product(s, to, _0,_2,_7);
+//			product(u, to, _5,_6);
+//			product(t, to, _3,_4,_7);
+//			
+//			for(Node n:  Arrays.asList(_0,_2,_7)) {
+//				r = _1.createRelationshipTo(n,to);
+//				r.setProperty("isSet", true);
+//				r.setProperty("sets",new String[]{s.getProperty("name").toString()});
+//			}
+//			for(Node n:  Arrays.asList(_2,_7)) {
+//				n.createRelationshipTo(_1,to);
+//				r.setProperty("isSet", true);
+//				r.setProperty("sets",new String[]{s.getProperty("name").toString()});
+//			}
 			
 			tx_create_graph.success();
 		} catch (Exception e) {
@@ -173,13 +184,14 @@ public class AppTest extends TestCase {
 		return n;
 	}
 	
-	private void product(RelationshipType type, Node ...nodes) {
+	private void product(Node set, RelationshipType type, Node ...nodes) {
 		for(Node n : nodes) {
 			for (Node n2 : nodes) {
 				if (n == n2)
 					continue;
 				Relationship r = n.createRelationshipTo(n2, type);
 				r.setProperty("isSet", true);
+				r.setProperty("sets",new String[]{set.getProperty("name").toString()});
 			}
 		}
 	}
@@ -191,19 +203,19 @@ public class AppTest extends TestCase {
 		}
 	}
 
-	private List<WeightedPath> run(Node source, Node target, int k, PathExpander<?> expander) {
+	private List<WeightedPath> run(Node source, Node target, int k, CustomPathExpander expander) {
 
 		Transaction tx = graphDb.beginTx();
 
 		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(null);
 
-		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
+		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, expander, costEvaluator);
 
 		List<WeightedPath> paths = algo.run(source, target, k);
 
 		
 		for (WeightedPath path : paths) {
-			System.out.println(path.toString());
+			System.out.println(Iterables.toList(path.nodes()));
 		}
 
 		tx.success();
@@ -216,18 +228,23 @@ public class AppTest extends TestCase {
 	 * Rigourous Test :-)
 	 */
 	public void test0_2() {
-		run(_0, _2, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of()));
+		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to), true);
+		run(_0, _2, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of(),inline));
 		System.out.println("just NetworkNodes");
-		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of()));
+		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), NodeConstraints.of(), RelConstraints.of(),inline));
 		System.out.println("just NetworkNodes and real isNet edges");
-		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, "isNet", OperatorConstraint.eq(true)))));
+		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, "isNet", OperatorConstraint.eq(true))),inline));
 	}
 	
 	public void test0_4() {
-		run(_0, _4, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of()));
+		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to), false);
+		//run(_0, _4, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of(),inline));
 		System.out.println("just NetworkNodes");
-		run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of()));
-		System.out.println("just NetworkNodes and real isNet edges");
-		run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, "isNet", OperatorConstraint.eq(true)))));
+		//run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(),inline));
+		run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), NodeConstraints.of(), RelConstraints.of(),inline));
+		
+		
+		//System.out.println("just NetworkNodes and real isNet edges");
+		//run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, "isNet", OperatorConstraint.eq(true))), null));
 	}
 }

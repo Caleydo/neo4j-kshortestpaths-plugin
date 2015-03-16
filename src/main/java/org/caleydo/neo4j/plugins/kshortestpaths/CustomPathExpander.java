@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.NodeConstraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.RelConstraints;
 import org.neo4j.graphdb.Node;
@@ -19,21 +20,23 @@ import org.neo4j.helpers.collection.FilteringIterable;
  * @author sam
  *
  */
-public class CustomPathExpander implements PathExpander<Object> {
+public class CustomPathExpander implements PathExpander<Object>, IRelationshipResolver {
 	
 	private final DirectionContraints directions;
 	private final NodeConstraints nodeConstraints;
 	private final RelConstraints relConstraints;
+	private final InlineRelationships inline;
 
 	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints) {
-		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints));
+		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), null);
 	}
 
-	public CustomPathExpander(DirectionContraints directions, NodeConstraints nodeContraints,RelConstraints relConstraints) {
+	public CustomPathExpander(DirectionContraints directions, NodeConstraints nodeContraints,RelConstraints relConstraints, InlineRelationships inline) {
 		super();
 		this.directions = directions;
 		this.nodeConstraints = nodeContraints;
 		this.relConstraints = relConstraints;
+		this.inline = inline;
 		
 	}
 	
@@ -42,7 +45,8 @@ public class CustomPathExpander implements PathExpander<Object> {
 		final Predicate<Node> goodNode = this.nodeConstraints.prepare(path.nodes());
 		final Predicate<Relationship> goodRel = this.relConstraints.prepare(path.relationships());
 		final Node endNode = path.endNode();
-		return new FilteringIterable<>(this.directions.filter(endNode), new Predicate<Relationship>() {
+		Iterable<Relationship> base = getRelationships(endNode);
+		return new FilteringIterable<>(base, new Predicate<Relationship>() {
 			@Override
 			public boolean accept(Relationship item) {
 				if (!goodRel.accept(item)) {
@@ -62,8 +66,17 @@ public class CustomPathExpander implements PathExpander<Object> {
 	}
 
 	@Override
+	public Iterable<Relationship> getRelationships(final Node endNode) {
+		Iterable<Relationship> base = this.directions.filter(endNode);
+		if (inline != null) {
+			base = inline.inline(base, endNode);
+		}
+		return base;
+	}
+
+	@Override
 	public PathExpander<Object> reverse() {
-		return new CustomPathExpander(this.directions.reverse(), this.nodeConstraints, this.relConstraints);
+		return new CustomPathExpander(this.directions.reverse(), this.nodeConstraints, this.relConstraints, inline);
 	}
 	
 	
@@ -72,8 +85,9 @@ public class CustomPathExpander implements PathExpander<Object> {
 		StringBuilder b = new StringBuilder();
 		b.append("CustomPathExpander {");
 		b.append("node: ").append(nodeConstraints);
-		b.append("rel: ").append(relConstraints);
-		b.append("dir: ").append(directions);
+		b.append(" rel: ").append(relConstraints);
+		b.append(" dir: ").append(directions);
+		b.append(" inline: ").append(inline);
 		b.append('}');
 		return b.toString();
 	}

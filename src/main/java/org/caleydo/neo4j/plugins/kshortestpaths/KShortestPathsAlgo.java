@@ -36,6 +36,7 @@ public class KShortestPathsAlgo {
 	protected final PathFinder<? extends WeightedPath> shortestPathFinder;
 	protected final CostEvaluator<Double> originalCostEvaluator;
 	protected final InvalidRelationshipCostEvaluator costEvaluator;
+	private final IRelationshipResolver resolver;
 
 	protected static class InvalidRelationshipCostEvaluator implements CostEvaluator<Double> {
 
@@ -63,7 +64,8 @@ public class KShortestPathsAlgo {
 
 	}
 
-	public KShortestPathsAlgo(PathExpander<?> expander, CostEvaluator<Double> costEvaluator) {
+	public KShortestPathsAlgo(PathExpander<?> expander, IRelationshipResolver resolver, CostEvaluator<Double> costEvaluator) {
+		this.resolver = resolver;
 		this.costEvaluator = new InvalidRelationshipCostEvaluator(costEvaluator);
 		this.originalCostEvaluator = costEvaluator;
 		this.shortestPathFinder = GraphAlgoFactory.dijkstra(expander, this.costEvaluator);
@@ -143,7 +145,7 @@ public class KShortestPathsAlgo {
 				// infinity
 				for (Node rootPathNode : rootPath.nodes()) {
 					if (rootPathNode.getId() != spurNode.getId()) {
-						for (Relationship relationship : rootPathNode.getRelationships()) {
+						for (Relationship relationship : getRelationships(rootPathNode)) {
 							costEvaluator.addInvalidRelationship(relationship);
 						}
 						//profile("invalids: "+rootPathNode.getRelationships(),w);
@@ -181,6 +183,10 @@ public class KShortestPathsAlgo {
 		return paths;
 	}
 
+	private Iterable<Relationship> getRelationships(Node node) {
+		return resolver.getRelationships(node);
+	}
+	
 	private static void profile(String label, StopWatch w) {
 		w.split();
 		//System.err.println(label+": "+w.toSplitString());
