@@ -63,8 +63,10 @@ public class NodeConstraints {
 					int hit = hits[i];
 					if (constraints[i].accept(item))
 						hit += 1;
-					if (!constraints[i].times(hit, length))
+					if (!constraints[i].times(hit, length)) {
+						//System.out.println("no: "+item);
 						return false;
+					}
 				}
 				return true;
 			}

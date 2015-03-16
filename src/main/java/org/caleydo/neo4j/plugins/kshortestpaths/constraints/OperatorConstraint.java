@@ -83,6 +83,7 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 		
 		@Override
 		protected boolean acceptImpl(Object value) {
+			//System.out.println("compare: "+Objects.toString(value)+" "+Objects.toString(eq));
 			if (isArray(value) != isArray(this.eq)) {
 				return false;
 			}

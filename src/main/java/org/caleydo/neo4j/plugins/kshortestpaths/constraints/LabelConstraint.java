@@ -25,12 +25,12 @@ public class LabelConstraint extends TimeConstraint implements INodeConstraint {
 
 	@Override
 	public boolean accept(Node item) {
-		return c.accept(Iterables.map(new Function<Label, String>() {
+		return c.accept(Iterables.toArray(String.class,Iterables.map(new Function<Label, String>() {
 			@Override
 			public String apply(Label from) {
 				return from.name();
 			};
-		}, item.getLabels()));
+		}, item.getLabels())));
 	}
 	
 	@Override
