@@ -228,7 +228,8 @@ public class AppTest extends TestCase {
 	 * Rigourous Test :-)
 	 */
 	public void test0_2() {
-		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to), true, -1);
+		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to, db), true, -1);
 		run(_0, _2, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of(),inline));
 		System.out.println("just NetworkNodes");
 		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), NodeConstraints.of(), RelConstraints.of(),inline));
@@ -237,7 +238,8 @@ public class AppTest extends TestCase {
 	}
 	
 	public void test0_4() {
-		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to), false, -1);
+		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to, db), false, -1);
 		//run(_0, _4, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of(),inline));
 		System.out.println("just NetworkNodes");
 		//run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(),inline));

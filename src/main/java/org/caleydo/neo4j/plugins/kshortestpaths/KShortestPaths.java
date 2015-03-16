@@ -43,7 +43,8 @@ public class KShortestPaths extends ServerPlugin {
 			@Description("constraints") @Parameter(name = "constraints", optional = true) String constraints
 			) {
 
-		CustomPathExpander expander = toExpander(constraints);
+		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+		CustomPathExpander expander = toExpander(constraints, db);
 
 		Transaction tx = graphDb.beginTx();
 
@@ -51,7 +52,7 @@ public class KShortestPaths extends ServerPlugin {
 
 		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
 
-		List<WeightedPath> paths = algo.run(source, target, k);
+		List<WeightedPath> paths = algo.run(db.inject(source), db.inject(target), k);
 
 		List<Map<String, Object>> pathList = new ArrayList<Map<String, Object>>(paths.size());
 
@@ -69,16 +70,16 @@ public class KShortestPaths extends ServerPlugin {
 	}
 
 
-	static CustomPathExpander toExpander(String constraints) {
-		return toExpander(toMap(constraints));
+	static CustomPathExpander toExpander(String constraints, FakeGraphDatabase db) {
+		return toExpander(toMap(constraints), db);
 	}
 	@SuppressWarnings("unchecked")
-	static CustomPathExpander toExpander(Map<String,Object> c) {
+	static CustomPathExpander toExpander(Map<String,Object> c, FakeGraphDatabase db) {
 		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
 		List<Map<String,Object>> nodeContraints= (List<Map<String, Object>>) (c == null ? null : c.get("node"));
 		List<Map<String,Object>> relConstraints= (List<Map<String, Object>>) (c == null ? null : c.get("rel"));
 		Map<String,Object> inline = (Map<String,Object>)(c == null ? null : c.get("inline"));
-		return new CustomPathExpander(directions, nodeContraints, relConstraints, inline);
+		return new CustomPathExpander(directions, nodeContraints, relConstraints, inline, db);
 	}
 	
 

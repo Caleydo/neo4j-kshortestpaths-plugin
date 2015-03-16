@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.caleydo.neo4j.plugins.kshortestpaths.FakeGraphDatabase;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeRelationship;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -100,22 +101,23 @@ public class InlineRelationships {
 		Relationship create(Node source, Node target, Collection<Pair<Relationship, Relationship>> inlinem, boolean reverse);
 	}
 	
-	public static class FakeSetRelationshipFactory implements IFakeRelationshipFactory {
+	public static class FakeSetRelationshipFactory implements IFakeRelationshipFactory{
 
 		private final String flag;
 		private final String aggregate;
 		private final String aggregateInlined;
 		private final RelationshipType type;
+		private final FakeGraphDatabase w;
 		
-		public FakeSetRelationshipFactory(String flag, String aggregate, String aggregateInlined, RelationshipType type) {
+		public FakeSetRelationshipFactory(String flag, String aggregate, String aggregateInlined, RelationshipType type, FakeGraphDatabase w) {
 			super();
 			this.flag = flag;
 			this.aggregate = aggregate;
 			this.aggregateInlined = aggregateInlined;
 			this.type = type;
+			this.w = w;
 		}
 		
-		private Map<Long, Relationship> cache = new HashMap<Long, Relationship>();
 
 		@Override
 		public Relationship create(Node source, Node target,
@@ -126,8 +128,8 @@ public class InlineRelationships {
 			Map<String,Object> properties = new HashMap<String, Object>();
 			properties.put(flag, true);
 			String[] r = new String[inline.size()];
-			if (cache.containsKey(id)) {
-				return cache.get(id);
+			if (w.hasFake(id)) {
+				return w.getRelationshipById(id);
 			}
 			
 			int i = 0;
@@ -137,7 +139,7 @@ public class InlineRelationships {
 			properties.put(aggregate, r);
 			
 			Relationship rel = new FakeRelationship(source.getGraphDatabase(),type, reverse ? target : source, reverse ? source : target, properties);
-			cache.put(rel.getId(), rel);
+			w.putFake(rel);
 			return rel;
 		}
 

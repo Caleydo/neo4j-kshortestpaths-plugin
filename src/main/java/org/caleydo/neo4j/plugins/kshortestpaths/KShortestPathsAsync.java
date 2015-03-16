@@ -47,7 +47,9 @@ public class KShortestPathsAsync {
             	final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
             	writer.beginArray();
             	
-            	CustomPathExpander expander = KShortestPaths.toExpander(contraints);
+
+        		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+            	CustomPathExpander expander = KShortestPaths.toExpander(contraints, db);
         		
         		Transaction tx = null;
         		try {
@@ -86,10 +88,10 @@ public class KShortestPathsAsync {
 						}
 	        		});
 	        		*/
-	        		KShortestPathsAlgo2 algo = new KShortestPathsAlgo2(expander);
+	        		KShortestPathsAlgo2 algo = new KShortestPathsAlgo2(expander, expander);
 	        		
 	        		final Gson gson = new Gson();
-	        		algo.run(source, target, Integer.MAX_VALUE, k == null ? 1 : k.intValue(), new IPathReadyListener2() {
+	        		algo.run(db.inject(source), db.inject(target), Integer.MAX_VALUE, k == null ? 1 : k.intValue(), new IPathReadyListener2() {
 	
 						@Override
 						public void onPathReady(org.neo4j.graphdb.Path path) {

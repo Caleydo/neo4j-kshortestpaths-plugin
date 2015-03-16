@@ -40,6 +40,27 @@ public class NodeConstraints {
 		}
 		return LabelConstraint.parse(desc);
 	}
+	
+	public boolean isValid(Iterable<Node> nodes) {
+		final int[] hits = new int[this.constraints.length];
+		Arrays.fill(hits, 0);
+		int l = 0;
+		for(Node node : nodes) {
+			l++;
+			for(int i = 0; i < hits.length; ++i)
+				if (this.constraints[i].accept(node))
+					hits[i]++;
+		}
+		
+		for(int i = 0; i < hits.length; ++i) {
+			int hit = hits[i];
+			if(!constraints[i].times(hit, l)) {
+				//System.out.println("no: "+item);
+				return false;
+			}
+		}
+		return true;
+	}
 
 	public Predicate<Node> prepare(Iterable<Node> nodes) {
 		if (this.constraints.length == 0) {

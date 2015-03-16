@@ -40,6 +40,29 @@ public class RelConstraints {
 		}
 		return PropertyLabelConstraint.parse(desc);
 	}
+	
+
+	
+	public boolean isValid(Iterable<Relationship> rels) {
+		final int[] hits = new int[this.constraints.length];
+		Arrays.fill(hits, 0);
+		int l = 0;
+		for(Relationship rel : rels) {
+			l++;
+			for(int i = 0; i < hits.length; ++i)
+				if (this.constraints[i].accept(rel))
+					hits[i]++;
+		}
+		
+		for(int i = 0; i < hits.length; ++i) {
+			int hit = hits[i];
+			if(!constraints[i].times(hit, l)) {
+				//System.out.println("no: "+item);
+				return false;
+			}
+		}
+		return true;
+	}
 
 	public Predicate<Relationship> prepare(Iterable<Relationship> rels) {
 		if (constraints.length == 0) {

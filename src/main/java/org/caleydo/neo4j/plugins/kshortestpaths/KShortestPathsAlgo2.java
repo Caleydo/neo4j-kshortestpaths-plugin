@@ -7,13 +7,16 @@ import org.neo4j.graphalgo.impl.path.ShortestPath;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
+import org.neo4j.helpers.Predicate;
 
 public class KShortestPathsAlgo2 {
 	
 	private final PathExpander<?> expander;
+	private final Predicate<Path> pathAccepter;
 
-	public KShortestPathsAlgo2(PathExpander<?> expander) {
+	public KShortestPathsAlgo2(PathExpander<?> expander, Predicate<Path> pathAccepter) {
 		this.expander = expander;
+		this.pathAccepter = pathAccepter;
 		
 	}
 
@@ -22,6 +25,9 @@ public class KShortestPathsAlgo2 {
 
         //first attempt: classic shortest path
 		for(Path path : new ShortestPath(maxLength, expander).findAllPaths(start, end)) {
+			if (!pathAccepter.accept(path)) {
+				continue; //dismiss result
+			}
 			result.add(path);
 			if (onPathReady != null) {
 				onPathReady.onPathReady(path);
@@ -37,6 +43,9 @@ public class KShortestPathsAlgo2 {
         //the shortest paths after all). We try with longer path length until we have enough:
         for (int depth = result.get(0).length() + 1; depth <= maxLength && result.size() < k; depth++) {
         	for(Path path : new ShortestPath(depth, expander, k - result.size(), true).findAllPaths(start, end)) {
+        		if (!pathAccepter.accept(path)) {
+    				continue; //dismiss result
+    			}
     			result.add(path);
     			if (onPathReady != null) {
     				onPathReady.onPathReady(path);

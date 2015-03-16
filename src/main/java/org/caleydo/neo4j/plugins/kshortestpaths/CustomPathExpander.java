@@ -19,13 +19,14 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.traversal.BranchState;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.FilteringIterable;
+import org.neo4j.helpers.collection.Iterables;
 
 /**
  * custom path expander
  * @author sam
  *
  */
-public class CustomPathExpander implements PathExpander<Object> {
+public class CustomPathExpander implements PathExpander<Object>, Predicate<Path> {
 	
 	private final DirectionContraints directions;
 	private final NodeConstraints nodeConstraints;
@@ -34,23 +35,23 @@ public class CustomPathExpander implements PathExpander<Object> {
 	
 	private Set<Long> extraIgnoreNodes;
 
-	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints, Map<String,Object> inline) {
-		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), of(inline));
+	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints, Map<String,Object> inline, FakeGraphDatabase db) {
+		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), of(inline, db));
 	}
 		
-	private static InlineRelationships of(Map<String,Object> desc) {
+	private static InlineRelationships of(Map<String,Object> desc, FakeGraphDatabase db) {
 		if (desc == null) {
 			return null;
 		}
 		DynamicRelationshipType type = DynamicRelationshipType.withName(desc.get("inline").toString());
 		boolean undirectional = Objects.equals(desc.get("undirectional"),Boolean.TRUE);
 		long notInlineId = desc.containsKey("dontInline") ? ((Number)desc.get("dontInline")).longValue() : -1;
-		IFakeRelationshipFactory factory = toFactory(desc);
+		IFakeRelationshipFactory factory = toFactory(desc, db);
 		return new InlineRelationships(type, factory, undirectional, notInlineId);
 	}
 
-	private static IFakeRelationshipFactory toFactory(Map<String, Object> desc) {
-		return new FakeSetRelationshipFactory(desc.get("flag").toString(), desc.get("aggregate").toString(), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()));
+	private static IFakeRelationshipFactory toFactory(Map<String, Object> desc, FakeGraphDatabase db) {
+		return new FakeSetRelationshipFactory(desc.get("flag").toString(), desc.get("aggregate").toString(), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()), db);
 	}
 
 	public CustomPathExpander(DirectionContraints directions, NodeConstraints nodeContraints,RelConstraints relConstraints, InlineRelationships inline) {
@@ -66,11 +67,15 @@ public class CustomPathExpander implements PathExpander<Object> {
 		this.extraIgnoreNodes = extraIgnoreNodes;
 	}
 	
+	@Override
+	public boolean accept(Path path) {
+		return this.nodeConstraints.isValid(path.nodes()) && this.relConstraints.isValid(path.relationships());
+	}
 	
 	@Override
 	public Iterable<Relationship> expand(final Path path, BranchState<Object> state) {
-		final Predicate<Node> goodNode = this.nodeConstraints.prepare(path.nodes());
-		final Predicate<Relationship> goodRel = this.relConstraints.prepare(path.relationships());
+		final Predicate<Node> goodNode = this.nodeConstraints.prepare(Iterables.<Node>empty()); //path.nodes());
+		final Predicate<Relationship> goodRel = this.relConstraints.prepare(Iterables.<Relationship>empty()); //path.relationships());
 		final Node endNode = path.endNode();
 		Iterable<Relationship> base = getRelationships(endNode);
 		return new FilteringIterable<>(base, new Predicate<Relationship>() {
