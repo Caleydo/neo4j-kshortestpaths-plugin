@@ -2,11 +2,15 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.FakeSetRelationshipFactory;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.IFakeRelationshipFactory;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.NodeConstraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.RelConstraints;
+import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
@@ -27,8 +31,23 @@ public class CustomPathExpander implements PathExpander<Object>, IRelationshipRe
 	private final RelConstraints relConstraints;
 	private final InlineRelationships inline;
 
-	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints) {
-		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), null);
+	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints, Map<String,Object> inline) {
+		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), of(inline));
+	}
+		
+	private static InlineRelationships of(Map<String,Object> desc) {
+		if (desc == null) {
+			return null;
+		}
+		DynamicRelationshipType type = DynamicRelationshipType.withName(desc.get("inline").toString());
+		boolean undirectional = Objects.equals(desc.get("undirectional"),Boolean.TRUE);
+		long notInlineId = desc.containsKey("dontInline") ? ((Number)desc.get("dontInline")).longValue() : -1;
+		IFakeRelationshipFactory factory = toFactory(desc);
+		return new InlineRelationships(type, factory, undirectional, notInlineId);
+	}
+
+	private static IFakeRelationshipFactory toFactory(Map<String, Object> desc) {
+		return new FakeSetRelationshipFactory(desc.get("flag").toString(), desc.get("aggregate").toString(), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()));
 	}
 
 	public CustomPathExpander(DirectionContraints directions, NodeConstraints nodeContraints,RelConstraints relConstraints, InlineRelationships inline) {

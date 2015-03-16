@@ -23,12 +23,14 @@ public class InlineRelationships {
 	private final RelationshipType type;
 	private final IFakeRelationshipFactory factory;
 	private final boolean undirectional;
+	private final long notInlineId;
 
-	public InlineRelationships(RelationshipType type, final IFakeRelationshipFactory factory, final boolean undirectional) {
+	public InlineRelationships(RelationshipType type, final IFakeRelationshipFactory factory, final boolean undirectional, final long notInlineId) {
 		super();
 		this.type = type;
 		this.factory = factory;
 		this.undirectional = undirectional;
+		this.notInlineId = notInlineId;
 	}
 	
 	@Override
@@ -43,7 +45,7 @@ public class InlineRelationships {
 		Collection<Relationship> bad = new ArrayList<Relationship>();
 		MultiMap m = new MultiValueMap();
 		for (Relationship s : rels) {
-			if (s.isType(type)) {
+			if (s.isType(type) && s.getEndNode() == source && !skip(s.getOtherNode(source))) { //just incoming edges
 				Node toInline = s.getOtherNode(source);
 				for(Relationship i : toInline.getRelationships(type)) {
 					if (i == s) {
@@ -85,6 +87,12 @@ public class InlineRelationships {
 	}
 
 	
+
+	private boolean skip(Node node) {
+		return node.getId() == notInlineId;
+	}
+
+
 
 	public interface IFakeRelationshipFactory {
 		Relationship create(Node source, Node target, Collection<Pair<Relationship, Relationship>> inlinem, boolean reverse);

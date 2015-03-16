@@ -76,7 +76,8 @@ public class KShortestPaths extends ServerPlugin {
 		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
 		List<Map<String,Object>> nodeContraints= (List<Map<String, Object>>) (c == null ? null : c.get("node"));
 		List<Map<String,Object>> relConstraints= (List<Map<String, Object>>) (c == null ? null : c.get("rel"));
-		return new CustomPathExpander(directions, nodeContraints, relConstraints);
+		Map<String,Object> inline = (Map<String,Object>)(c == null ? null : c.get("inline"));
+		return new CustomPathExpander(directions, nodeContraints, relConstraints, inline);
 	}
 	
 
