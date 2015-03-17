@@ -54,7 +54,7 @@ public class NodeConstraints {
 		
 		for(int i = 0; i < hits.length; ++i) {
 			int hit = hits[i];
-			if(!constraints[i].times(hit, l)) {
+			if(!constraints[i].timesFinal(hit, l)) {
 				//System.out.println("no: "+item);
 				return false;
 			}
@@ -84,7 +84,7 @@ public class NodeConstraints {
 					int hit = hits[i];
 					if (constraints[i].accept(item))
 						hit += 1;
-					if (!constraints[i].times(hit, length)) {
+					if (!constraints[i].timesIntermediate(hit, length)) {
 						//System.out.println("no: "+item);
 						return false;
 					}
@@ -95,7 +95,8 @@ public class NodeConstraints {
 	}
 	
 	public static interface INodeConstraint extends Predicate<Node> {
-		boolean times(int hits, int pathLength);
+		boolean timesIntermediate(int hits, int pathLength);
+		boolean timesFinal(int hits, int pathLength);
 	}
 	
 

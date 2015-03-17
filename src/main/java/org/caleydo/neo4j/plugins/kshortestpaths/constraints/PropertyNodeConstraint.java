@@ -11,14 +11,14 @@ public class PropertyNodeConstraint extends TimeConstraint implements INodeConst
 	private final Predicate<Object> c;
 	private final String property;
 
-	public PropertyNodeConstraint(Number times, String property, Predicate<Object> c) {
-		super(times);
+	public PropertyNodeConstraint(Number minTimes, Number times, String property, Predicate<Object> c) {
+		super(minTimes, times);
 		this.property = property;
 		this.c = c;
 	}
 
 	public static PropertyNodeConstraint parse(String property, Map<String, Object> desc) {
-		return new PropertyNodeConstraint((Number) desc.get("times"), property,
+		return new PropertyNodeConstraint((Number) desc.get("minTimes"), (Number) desc.get("times"), property,
 				OperatorConstraint.parse(desc));
 	}
 

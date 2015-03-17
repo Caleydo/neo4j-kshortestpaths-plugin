@@ -10,13 +10,13 @@ public class PropertyLabelConstraint extends TimeConstraint implements IRelConst
 
 	private final  Predicate<Object> c;
 
-	public PropertyLabelConstraint(Number times, Predicate<Object> c) {
-		super(times);
+	public PropertyLabelConstraint(Number minTimes, Number times, Predicate<Object> c) {
+		super(minTimes, times);
 		this.c = c;
 	}
 
 	public static PropertyLabelConstraint parse(Map<String, Object> desc) {
-		return new PropertyLabelConstraint((Number) desc.get("times"),
+		return new PropertyLabelConstraint((Number) desc.get("minTimes"), (Number) desc.get("times"),
 				OperatorConstraint.parse(desc));
 	}
 

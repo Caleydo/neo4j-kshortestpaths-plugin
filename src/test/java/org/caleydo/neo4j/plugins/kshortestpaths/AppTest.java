@@ -234,7 +234,7 @@ public class AppTest extends TestCase {
 		System.out.println("just NetworkNodes");
 		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), NodeConstraints.of(), RelConstraints.of(),inline));
 		System.out.println("just NetworkNodes and real isNet edges");
-		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, "isNet", OperatorConstraint.eq(true))),inline));
+		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, null, "isNet", OperatorConstraint.eq(true))),inline));
 	}
 	
 	public void test0_4() {

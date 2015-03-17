@@ -56,7 +56,7 @@ public class RelConstraints {
 		
 		for(int i = 0; i < hits.length; ++i) {
 			int hit = hits[i];
-			if(!constraints[i].times(hit, l)) {
+			if(!constraints[i].timesFinal(hit, l)) {
 				//System.out.println("no: "+item);
 				return false;
 			}
@@ -86,7 +86,7 @@ public class RelConstraints {
 					int hit = hits[i];
 					if (constraints[i].accept(item))
 						hit += 1;
-					if (!constraints[i].times(hit, length))
+					if (!constraints[i].timesIntermediate(hit, length))
 						return false;
 				}
 				return true;
@@ -95,7 +95,8 @@ public class RelConstraints {
 	}
 	
 	public static interface IRelConstraint extends Predicate<Relationship> {
-		boolean times(int hits, int pathLength);
+		boolean timesIntermediate(int hits, int pathLength);
+		boolean timesFinal(int hits, int pathLength);
 	}
 
 	@Override
