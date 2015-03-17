@@ -3,6 +3,7 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.GET;
@@ -38,7 +39,7 @@ public class KShortestPathsAsync {
 	@GET
     @Path("/{from}/{to}")
     public Response findColleagues(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k, final @QueryParam("maxDepth") Integer maxDepth, 
-    		final @QueryParam("constraints") String contraints, @QueryParam("algorithm") final String algorithm, @QueryParam("costFunction") final String costFunction, @QueryParam("debug") Boolean debugD)
+    		final @QueryParam("constraints") String contraints, @QueryParam("algorithm") final String algorithm, @QueryParam("mapper") final List<Integer> mapper, @QueryParam("costFunction") final String costFunction, @QueryParam("debug") Boolean debugD)
     {
 		final boolean debug = debugD == Boolean.TRUE;
         StreamingOutput stream = new StreamingOutput()
@@ -48,11 +49,6 @@ public class KShortestPathsAsync {
             {
             	final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
             	writer.beginArray();
-            	
-
-        		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
-            	CustomPathExpander expander = KShortestPaths.toExpander(contraints, db);
-            	expander.setDebug(debug);
         		
         		Transaction tx = null;
         		try {
@@ -71,6 +67,11 @@ public class KShortestPathsAsync {
 	        			return;
 	        		}	   
 	        		
+
+	        		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+	            	CustomPathExpander expander = KShortestPaths.toExpander(contraints, db);
+	            	expander.setDebug(debug);
+	            	
 	        		source = db.inject(source);
 	        		target = db.inject(target);
 	        		
@@ -83,6 +84,9 @@ public class KShortestPathsAsync {
 	
 						@Override
 						public void onPathReady(WeightedPath path) {
+							if (mapper != null && mapper.size() > 0) {
+								path = KShortestPaths.slice(path, ((Number)mapper.get(0)).intValue(), mapper.size() >= 2 ? ((Number)mapper.get(1)).intValue(): -1);
+							}
 							//System.out.println(path);
 							//System.out.println(path.relationships());
 							Map<String, Object> repr = KShortestPaths.getPathAsMap(path);

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
+import org.neo4j.graphalgo.impl.util.WeightedPathImpl;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -14,6 +15,7 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.server.plugins.Description;
 import org.neo4j.server.plugins.Parameter;
 import org.neo4j.server.plugins.PluginTarget;
@@ -82,6 +84,14 @@ public class KShortestPaths extends ServerPlugin {
 		return new CustomPathExpander(directions, nodeContraints, relConstraints, inline, db);
 	}
 	
+	static WeightedPath slice(WeightedPath path, int start, int end) {
+		if (start ==0 && end == -1) {
+			return path;
+		}
+		List<Node> nodes = Iterables.toList(path.nodes());
+		List<Relationship> rels = Iterables.toList(path.relationships());
+		return new WeightedPathImpl(path.weight(), new MyPath(nodes.subList(start, end < 0 ? nodes.size()-end : end),rels.subList(start, end < 0 ? nodes.size()-end : end)));
+	}
 
 
 	private static Map<String, Object> toMap(String filter) {
