@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.neo4j.graphalgo.impl.path.ShortestPath;
+import org.neo4j.graphalgo.impl.util.WeightedPathImpl;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
@@ -29,7 +30,7 @@ public class KShortestPathsAlgo2 {
 		}
 	}
 
-	public List<Path> run(Node start, Node end, int k, int maxLength, IPathReadyListener2 onPathReady) {
+	public List<Path> run(Node start, Node end, int k, int maxLength, IPathReadyListener onPathReady) {
 		debug("start", start.getId(), end.getId(), k, maxLength, this.expander);
 		List<Path> result = new LinkedList<Path>();
 
@@ -43,7 +44,7 @@ public class KShortestPathsAlgo2 {
 			debug("found", path);
 			result.add(path);
 			if (onPathReady != null) {
-				onPathReady.onPathReady(path);
+				onPathReady.onPathReady(new WeightedPathImpl(path.length(), path));
 			}
 
 			if (result.size() >= k) {
@@ -68,7 +69,7 @@ public class KShortestPathsAlgo2 {
     			debug("found", path);
     			result.add(path);
     			if(onPathReady != null) {
-    				onPathReady.onPathReady(path);
+    				onPathReady.onPathReady(new WeightedPathImpl(path.length(), path));
     			}
     			if (result.size() >= k) {
     				break;

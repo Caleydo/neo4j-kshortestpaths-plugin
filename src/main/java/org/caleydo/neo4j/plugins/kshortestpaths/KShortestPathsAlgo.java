@@ -240,8 +240,4 @@ public class KShortestPathsAlgo {
 		return new WeightedPathImpl(originalCostEvaluator, pathBuilder.build());
 
 	}
-	
-	public static interface IPathReadyListener {
-		void onPathReady(WeightedPath path);
-	}
 }
