@@ -95,6 +95,8 @@ public class KShortestPathsAsync {
 	
 						@Override
 						public void onPathReady(org.neo4j.graphdb.Path path) {
+							//System.out.println(path);
+							//System.out.println(path.relationships());
 							Map<String, Object> repr = KShortestPaths.getPathAsMap(path);
 							gson.toJson(repr, Map.class, writer); 
 							try {

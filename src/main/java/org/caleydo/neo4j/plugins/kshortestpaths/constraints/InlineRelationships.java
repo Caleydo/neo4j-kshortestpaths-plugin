@@ -42,26 +42,26 @@ public class InlineRelationships {
 	public Iterable<Relationship> inline(Iterable<Relationship> rels, final Node source) {
 		//assumption just create new edges don't change existing ones
 		//assumption don't recreate an edge between an already existing one
-		Set<Node> existing = new HashSet<>();
+		Set<Long> existing = new HashSet<>();
 		Collection<Relationship> bad = new ArrayList<Relationship>();
 		MultiMap m = new MultiValueMap();
 		for (Relationship s : rels) {
 			//System.out.println(s+" "+s.getStartNode()+" "+s.getEndNode()+" "+s.getEndNode().equals(source));
-			if (s.isType(type) && s.getEndNode().equals(source) && !skip(s.getOtherNode(source))) { //just incoming edges
-				Node toInline = s.getOtherNode(source);
+			Node toInline = s.getOtherNode(source);
+			if (s.isType(type) && s.getEndNode().equals(source) && !skip(toInline)) { //just incoming edges
 				for(Relationship i : toInline.getRelationships(type)) {
 					if (i.equals(s)) {
 						continue;
 					}
-					m.put(i.getOtherNode(toInline), Pair.of(s, i));
+					m.put(i.getOtherNode(toInline).getId(), Pair.of(s, i));
 				}
 			} else {
 				bad.add(s);
-				existing.add(s.getOtherNode(source));	
+				existing.add(toInline.getId());	
 			}
 		}
-		m.remove(source); //not self loops
-		for(Node ex : existing) { //remove all existing ones
+		m.remove(source.getId()); //not self loops
+		for(Long ex : existing) { //remove all existing ones
 			m.remove(ex);
 		}
 		if (m.isEmpty()) { //nothing to do
@@ -70,10 +70,10 @@ public class InlineRelationships {
 		//System.out.println(m);
 		
 		@SuppressWarnings("unchecked")
-		Iterable<Relationship> inlined = Iterables.map(new Function<Map.Entry<Node,Collection<Pair<Relationship, Relationship>>>, Relationship>() {
+		Iterable<Relationship> inlined = Iterables.map(new Function<Map.Entry<Long,Collection<Pair<Relationship, Relationship>>>, Relationship>() {
 			@Override
-			public Relationship apply(Map.Entry<Node, Collection<Pair<Relationship, Relationship>>> from) {
-				return factory.create(source, from.getKey(), from.getValue(), false);
+			public Relationship apply(Map.Entry<Long, Collection<Pair<Relationship, Relationship>>> from) {
+				return factory.create(from.getValue(), false);
 			}
 		}, m.entrySet());
 		
@@ -81,7 +81,7 @@ public class InlineRelationships {
 		Iterable<Relationship> inlined2 = undirectional ? Iterables.map(new Function<Map.Entry<Node,Collection<Pair<Relationship, Relationship>>>, Relationship>() {
 			@Override
 			public Relationship apply(Map.Entry<Node, Collection<Pair<Relationship, Relationship>>> from) {
-				return factory.create(source, from.getKey(), from.getValue(), true);
+				return factory.create(from.getValue(), true);
 			}
 		}, m.entrySet()): Arrays.asList();
 		
@@ -98,7 +98,7 @@ public class InlineRelationships {
 
 
 	public interface IFakeRelationshipFactory {
-		Relationship create(Node source, Node target, Collection<Pair<Relationship, Relationship>> inlinem, boolean reverse);
+		Relationship create(Collection<Pair<Relationship, Relationship>> inlinem, boolean reverse);
 	}
 	
 	public static class FakeSetRelationshipFactory implements IFakeRelationshipFactory{
@@ -120,17 +120,21 @@ public class InlineRelationships {
 		
 
 		@Override
-		public Relationship create(Node source, Node target,
-				Collection<Pair<Relationship, Relationship>> inline, boolean reverse) {
+		public Relationship create(Collection<Pair<Relationship, Relationship>> inline, boolean reverse) {
+			Pair<Relationship, Relationship> next = inline.iterator().next();
+			Pair<Node,Node> st = resolve(next);
+			Node source = st.first();
+			Node target = st.other();
 			
 			long id = FakeRelationship.id(reverse ? target : source, reverse ? source : target);
-			
-			Map<String,Object> properties = new HashMap<String, Object>();
-			properties.put(flag, true);
-			String[] r = new String[inline.size()];
 			if (w.hasFake(id)) {
 				return w.getRelationshipById(id);
 			}
+						
+			Map<String,Object> properties = new HashMap<String, Object>();
+			properties.put(flag, true);
+			properties.put("inlined", inline.toString());
+			String[] r = new String[inline.size()];
 			
 			int i = 0;
 			for(Pair<Relationship, Relationship> p : inline) {
@@ -142,6 +146,24 @@ public class InlineRelationships {
 			w.putFake(rel);
 			return rel;
 		}
+
+		private Pair<Node, Node> resolve(Pair<Relationship, Relationship> next) {
+			
+			Relationship first = next.first();
+			Relationship other = next.other();
+			Node a= first.getStartNode();
+			Node b= first.getEndNode();
+			Node c = other.getStartNode();
+			Node d = other.getEndNode();
+			if (a.getId() == c.getId()) 
+				return Pair.of(b,d);
+			else if (a.getId() == d.getId())
+				return Pair.of(b,c);
+			else if (b.getId() == c.getId())
+				return Pair.of(a, d);
+			return Pair.of(a, c);
+		}
+
 
 		@Override
 		public String toString() {

@@ -42,13 +42,16 @@ public class KShortestPathsAlgo2 {
         //Now, we have some results, but not enough. All the resulting paths so far must have the same length (they are
         //the shortest paths after all). We try with longer path length until we have enough:
         for (int depth = result.get(0).length() + 1; depth <= maxLength && result.size() < k; depth++) {
-        	for(Path path : new ShortestPath(depth, expander, k - result.size(), true).findAllPaths(start, end)) {
+        	for(Path path : new ShortestPath(depth, expander, Integer.MAX_VALUE, true).findAllPaths(start, end)) {
         		if (!pathAccepter.accept(path)) {
     				continue; //dismiss result
     			}
     			result.add(path);
-    			if (onPathReady != null) {
+    			if(onPathReady != null) {
     				onPathReady.onPathReady(path);
+    			}
+    			if (result.size() >= k) {
+    				break;
     			}
     		}
         }
