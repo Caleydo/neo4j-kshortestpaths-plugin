@@ -32,6 +32,10 @@ public class KShortestPathsAlgo2 {
 			if (onPathReady != null) {
 				onPathReady.onPathReady(path);
 			}
+
+			if (result.size() >= k) {
+				break;
+			}
 		}
 
         //If there are no results, there will never be any. If there are enough, then we just return them:

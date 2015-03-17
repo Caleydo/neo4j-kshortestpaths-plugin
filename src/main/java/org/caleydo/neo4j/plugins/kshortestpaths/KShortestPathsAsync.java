@@ -35,7 +35,7 @@ public class KShortestPathsAsync {
 
 	@GET
     @Path("/{from}/{to}")
-    public Response findColleagues(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k, final @QueryParam("costFunction") String costFunction, 
+    public Response findColleagues(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k, final @QueryParam("maxDepth") Integer maxDepth, 
     		final @QueryParam("constraints") String contraints)
     {
 		
@@ -91,7 +91,7 @@ public class KShortestPathsAsync {
 	        		KShortestPathsAlgo2 algo = new KShortestPathsAlgo2(expander, expander);
 	        		
 	        		final Gson gson = new Gson();
-	        		algo.run(db.inject(source), db.inject(target), Integer.MAX_VALUE, k == null ? 1 : k.intValue(), new IPathReadyListener2() {
+	        		algo.run(db.inject(source), db.inject(target), k == null ? 1 : k.intValue(), maxDepth == null ? 100 : maxDepth.intValue(), new IPathReadyListener2() {
 	
 						@Override
 						public void onPathReady(org.neo4j.graphdb.Path path) {
