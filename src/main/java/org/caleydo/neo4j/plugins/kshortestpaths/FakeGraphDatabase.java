@@ -139,6 +139,21 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 	public BidirectionalTraversalDescription bidirectionalTraversalDescription() {
 		return w.bidirectionalTraversalDescription();
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		return w.equals(obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return w.hashCode();
+	}
+	
+	@Override
+	public String toString() {
+		return w.toString()+'F';
+	}
 
 	public Node inject(Node source) {
 		return new FakeNode(source);
@@ -155,6 +170,21 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 		@Override
 		public GraphDatabaseService getGraphDatabase() {
 			return FakeGraphDatabase.this;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			return w.equals(obj);
+		}
+		
+		@Override
+		public int hashCode() {
+			return w.hashCode();
+		}
+		
+		@Override
+		public String toString() {
+			return w.toString()+'F';
 		}
 
 		@Override

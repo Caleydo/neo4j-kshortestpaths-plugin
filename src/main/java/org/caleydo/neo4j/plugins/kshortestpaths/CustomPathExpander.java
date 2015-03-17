@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.FakeSetRelationshipFactory;
@@ -34,9 +35,15 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	private final InlineRelationships inline;
 	
 	private Set<Long> extraIgnoreNodes;
+	
+	private boolean debug = false;
 
 	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints, Map<String,Object> inline, FakeGraphDatabase db) {
 		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), of(inline, db));
+	}
+	
+	public void setDebug(boolean debug) {
+		this.debug = debug;
 	}
 		
 	private static InlineRelationships of(Map<String,Object> desc, FakeGraphDatabase db) {
@@ -72,6 +79,12 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 		return this.nodeConstraints.isValid(path.nodes()) && this.relConstraints.isValid(path.relationships());
 	}
 	
+	private void debug(Object ... args) {
+		if (this.debug) {
+			System.out.println(StringUtils.join(args,' '));
+		}
+	}
+	
 	@Override
 	public Iterable<Relationship> expand(final Path path, BranchState<Object> state) {
 		final Predicate<Node> goodNode = this.nodeConstraints.prepare(Iterables.<Node>empty()); //path.nodes());
@@ -82,7 +95,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 			@Override
 			public boolean accept(Relationship item) {
 				if (!goodRel.accept(item)) {
-					//System.out.println("test: "+item+" bad rel");
+					debug("test: "+item+" bad rel");
 					return false;
 				}
 				Node added = item.getOtherNode(endNode);
@@ -90,11 +103,11 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 					return false;
 				}
 				boolean r= goodNode.accept(added);
-				//if (!r) {
-				//	System.out.println("test: "+added+" bad node");
-				//} else {
-				//	System.out.println("test: "+item+" "+added+" good");
-				//}
+				if (!r) {
+					debug("test: "+added+" bad node");
+				} else {
+					debug("test: "+item+" "+added+" good");
+				}
 				return r;
 			}
 		});

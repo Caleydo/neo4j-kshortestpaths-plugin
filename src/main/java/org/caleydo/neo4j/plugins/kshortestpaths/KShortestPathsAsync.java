@@ -36,9 +36,9 @@ public class KShortestPathsAsync {
 	@GET
     @Path("/{from}/{to}")
     public Response findColleagues(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k, final @QueryParam("maxDepth") Integer maxDepth, 
-    		final @QueryParam("constraints") String contraints)
+    		final @QueryParam("constraints") String contraints, @QueryParam("debug") Boolean debugD)
     {
-		
+		final boolean debug = debugD == Boolean.TRUE;
         StreamingOutput stream = new StreamingOutput()
         {
             @Override
@@ -50,6 +50,7 @@ public class KShortestPathsAsync {
 
         		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
             	CustomPathExpander expander = KShortestPaths.toExpander(contraints, db);
+            	expander.setDebug(debug);
         		
         		Transaction tx = null;
         		try {
@@ -88,7 +89,7 @@ public class KShortestPathsAsync {
 						}
 	        		});
 	        		*/
-	        		KShortestPathsAlgo2 algo = new KShortestPathsAlgo2(expander, expander);
+	        		KShortestPathsAlgo2 algo = new KShortestPathsAlgo2(expander, expander, debug);
 	        		
 	        		final Gson gson = new Gson();
 	        		algo.run(db.inject(source), db.inject(target), k == null ? 1 : k.intValue(), maxDepth == null ? 100 : maxDepth.intValue(), new IPathReadyListener2() {

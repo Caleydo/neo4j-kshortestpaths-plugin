@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeGraphDatabase;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeRelationship;
 import org.neo4j.graphdb.Node;
@@ -25,7 +26,8 @@ public class InlineRelationships {
 	private final IFakeRelationshipFactory factory;
 	private final boolean undirectional;
 	private final long notInlineId;
-
+	private boolean debug;
+	
 	public InlineRelationships(RelationshipType type, final IFakeRelationshipFactory factory, final boolean undirectional, final long notInlineId) {
 		super();
 		this.type = type;
@@ -34,9 +36,20 @@ public class InlineRelationships {
 		this.notInlineId = notInlineId;
 	}
 	
+	public void setDebug(boolean debug) {
+		this.debug = debug;
+		this.factory.setDebug(debug);
+	}
+	
 	@Override
 	public String toString() {
 		return "Inline: "+type.name() + " un: "+undirectional+" not:"+notInlineId+" fac:"+factory;
+	}
+	
+	private void debug(Object ... args) {
+		if (this.debug) {
+			System.out.println(StringUtils.join(args,' '));
+		}
 	}
 	
 	public Iterable<Relationship> inline(Iterable<Relationship> rels, final Node source) {
@@ -67,6 +80,7 @@ public class InlineRelationships {
 		if (m.isEmpty()) { //nothing to do
 			return bad;
 		}
+		debug("faking",m);
 		//System.out.println(m);
 		
 		@SuppressWarnings("unchecked")
@@ -99,6 +113,8 @@ public class InlineRelationships {
 
 	public interface IFakeRelationshipFactory {
 		Relationship create(Collection<Pair<Relationship, Relationship>> inlinem, boolean reverse);
+		
+		void setDebug(boolean debug);
 	}
 	
 	public static class FakeSetRelationshipFactory implements IFakeRelationshipFactory{
@@ -108,6 +124,7 @@ public class InlineRelationships {
 		private final String aggregateInlined;
 		private final RelationshipType type;
 		private final FakeGraphDatabase w;
+		private boolean debug;
 		
 		public FakeSetRelationshipFactory(String flag, String aggregate, String aggregateInlined, RelationshipType type, FakeGraphDatabase w) {
 			super();
@@ -118,6 +135,10 @@ public class InlineRelationships {
 			this.w = w;
 		}
 		
+		@Override
+		public void setDebug(boolean debug) {
+			this.debug = debug;
+		}		
 
 		@Override
 		public Relationship create(Collection<Pair<Relationship, Relationship>> inline, boolean reverse) {
