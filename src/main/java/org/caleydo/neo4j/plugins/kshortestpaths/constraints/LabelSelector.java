@@ -32,4 +32,9 @@ public class LabelSelector implements ISelector{
 	public String toString() {
 		return " label";
 	}
+	
+	@Override
+	public String toCypher(String var, boolean isNode) {
+		return (isNode ? "labels(" : "type(")+var+")";
+	}
 }

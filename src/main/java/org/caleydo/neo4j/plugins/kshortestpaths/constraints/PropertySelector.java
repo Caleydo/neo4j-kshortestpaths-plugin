@@ -20,4 +20,9 @@ public class PropertySelector implements ISelector{
 	public String toString() {
 		return " prop:"+property;
 	}
+	
+	@Override
+	public String toCypher(String var, boolean isNode) {
+		return var+"."+property;
+	}
 }

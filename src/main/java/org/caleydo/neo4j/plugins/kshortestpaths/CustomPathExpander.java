@@ -1,18 +1,17 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.IPathConstraint;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.FakeSetRelationshipFactory;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.IFakeRelationshipFactory;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PathConstraint;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PathConstraint.IIntermediate;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PathConstraints;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
@@ -31,7 +30,7 @@ import org.neo4j.helpers.collection.Iterables;
 public class CustomPathExpander implements PathExpander<Object>, Predicate<Path> {
 	
 	private final DirectionContraints directions;
-	private final PathConstraint constraints;
+	private final IPathConstraint constraints;
 	private final InlineRelationships inline;
 	
 	private Set<Long> extraIgnoreNodes;
@@ -39,9 +38,9 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	private boolean debug = false;
 	private boolean intermediatePaths = true;
 
-	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> constraints, Map<String,Object> inline, FakeGraphDatabase db) {
-		this(new DirectionContraints(directions), PathConstraint.of(constraints), of(inline, db));
-	}
+	public CustomPathExpander(Map<String,String> directions, Map<String,Object> constraints, Map<String,Object> inline, FakeGraphDatabase db) {
+		this(new DirectionContraints(directions), PathConstraints.parse(constraints), of(inline, db));
+	} 
 	
 	public void setDebug(boolean debug) {
 		this.debug = debug;
@@ -62,10 +61,10 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 		return new FakeSetRelationshipFactory(desc.get("flag").toString(), desc.get("aggregate").toString(), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()), db);
 	}
 
-	public CustomPathExpander(DirectionContraints directions, PathConstraint constraints, InlineRelationships inline) {
+	public CustomPathExpander(DirectionContraints directions, IPathConstraint constraints, InlineRelationships inline) {
 		super();
 		this.directions = directions;
-		this.constraints = constraints;b
+		this.constraints = constraints;
 		this.inline = inline;
 		
 	}
@@ -80,7 +79,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	
 	@Override
 	public boolean accept(Path path) {
-		return this.constraints.accept(path.nodes(), path.relationships());
+		return this.constraints.accept(path);
 	}
 	
 	private void debug(Object ... args) {

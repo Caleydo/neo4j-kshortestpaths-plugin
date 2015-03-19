@@ -6,16 +6,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.lang.StringUtils;
 import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.Predicates;
 import org.neo4j.helpers.collection.Iterables;
 
 public abstract class ValueConstraint implements Predicate<Object>{
 	
-	private static Function<Map<String, Object>, Predicate<Object>> toPredicate = new Function<Map<String, Object>, Predicate<Object>>() {
+	private static Function<Map<String, Object>, ValueConstraint> toPredicate = new Function<Map<String, Object>, ValueConstraint>() {
 		@Override
-		public Predicate<Object> apply(Map<String, Object> from) {
+		public ValueConstraint apply(Map<String, Object> from) {
 			return of(from);
 		}
 	};
@@ -35,8 +35,8 @@ public abstract class ValueConstraint implements Predicate<Object>{
 
 	protected abstract boolean acceptImpl(Object value);
 
-	public static Predicate<Object> of(Map<String, Object> desc) {
-		List<Predicate<Object>> cs = new ArrayList<>();
+	public static ValueConstraint of(Map<String, Object> desc) {
+		List<ValueConstraint> cs = new ArrayList<>();
 		for(String key : desc.keySet()) {
 			if (key.startsWith("$")) {
 				cs.add(parse(key.substring(1), desc.get(key)));
@@ -45,19 +45,19 @@ public abstract class ValueConstraint implements Predicate<Object>{
 		if (cs.size() == 1 ){
 			return cs.get(0);
 		}
-		return Predicates.and(cs);
+		return and(cs);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static Predicate<Object> parse(String op, Object desc) {
+	private static ValueConstraint parse(String op, Object desc) {
 		op = op.toLowerCase();
 		switch(op) {
 		case "or":
-			return Predicates.or(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
+			return or(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
 		case "and":
-			return Predicates.and(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
+			return and(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
 		case "not": 
-			return Predicates.not(of((Map<String,Object>)desc));
+			return not(of((Map<String,Object>)desc));
 		case "eq":
 		case "equal":
 			return eq(desc);
@@ -73,6 +73,16 @@ public abstract class ValueConstraint implements Predicate<Object>{
 
 	public static EqualPredicate eq(Object value) {
 		return new EqualPredicate(value);
+	}
+	
+	public static ValueConstraint and(Iterable<ValueConstraint> cs) {
+		return new CombinePredicate(true, Iterables.toList(cs));
+	}
+	public static ValueConstraint or(Iterable<ValueConstraint> cs) {
+		return new CombinePredicate(false, Iterables.toList(cs));
+	}
+	public static ValueConstraint not(ValueConstraint cs) {
+		return new NotPredicate(cs);
 	}
 	
 	static class EqualPredicate extends ValueConstraint {
@@ -97,7 +107,81 @@ public abstract class ValueConstraint implements Predicate<Object>{
 		
 		@Override
 		public void toString(StringBuilder b) {
-			b.append(" eq:").append(Objects.toString(eq));
+			b.append(" = ").append(Objects.toString(eq));
+		}
+		
+		@Override
+		public void toCypher(String property, StringBuilder b) {
+			b.append(property).append(" = ").append(escaped(eq)).append(' ');
+		}
+		
+	}
+	
+
+	static class CombinePredicate extends ValueConstraint {
+
+		private List<ValueConstraint> cs;
+		private final boolean isAnd;
+
+		public CombinePredicate(boolean isAnd, List<ValueConstraint> cs) {
+			this.isAnd = isAnd;
+			this.cs = cs;
+		}
+		
+		@Override
+		protected boolean acceptImpl(Object value) {
+			for(ValueConstraint c : cs) {
+				if (isAnd != c.accept(value)) {
+					return !isAnd;
+				}
+			}
+			return isAnd;
+		}
+		
+		@Override
+		public void toString(StringBuilder b) {
+			b.append(" ").append(isAnd ? "and" : "or").append("(").append(StringUtils.join(cs,",")).append(") ");
+		}
+		
+		@Override
+		public void toCypher(String property, StringBuilder b) {
+			b.append("(");
+			String in = isAnd ? " and " : " or ";
+			boolean first = true;
+			for(ValueConstraint c : cs) {
+				if (!first) {
+					b.append(in);
+				}
+				first = false;
+				c.toCypher(property, b);
+			}
+			b.append(") ");
+		}
+		
+	}
+	
+	static class NotPredicate extends ValueConstraint {
+
+		private ValueConstraint cs;
+
+		public NotPredicate(ValueConstraint cs) {
+			super();
+			this.cs = cs;
+		}
+
+		@Override
+		protected boolean acceptImpl(Object value) {
+			return !cs.acceptImpl(value);
+		}
+		
+		@Override
+		public void toString(StringBuilder b) {
+			b.append(" not (").append(cs).append(") ");
+		}
+		
+		@Override
+		public void toCypher(String property, StringBuilder b) {
+			b.append("NOT (").append(cs).append(") ");
 		}
 		
 	}
@@ -130,8 +214,22 @@ public abstract class ValueConstraint implements Predicate<Object>{
 		public void toString(StringBuilder b) {
 			b.append(" contains:").append(isArray(in) ? Arrays.toString((Object[])in): Objects.toString(in));
 		}
+		
+		@Override
+		public void toCypher(String property, StringBuilder b) {
+			b.append(escaped(in)).append(" in ").append(property).append(' ');
+		}
 	}
 	
+	public abstract void toCypher(String property, StringBuilder b);
+	
+	public String escaped(Object in) {
+		if (in instanceof String) {
+			return "\""+in+"\"";
+		}
+		return in.toString();
+	}
+
 	public abstract void toString(StringBuilder b);
 	
 	@Override
