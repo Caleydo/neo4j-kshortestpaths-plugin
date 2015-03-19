@@ -2,5 +2,5 @@ package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 
 
 public interface ICompositePathContraint extends IPathConstraint {
-	Iterable<IPathConstraint> children();
+	Iterable<? extends IPathConstraint> children();
 }

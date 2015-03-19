@@ -97,4 +97,11 @@ public class MatchRegion implements Comparable<MatchRegion> {
 			return false;
 		return true;
 	}
+
+	public boolean isStart() {
+		return this.minIndex == this.maxIndex && this.minIndex == 0;
+	}
+	public boolean isEnd() {
+		return this.minIndex == this.maxIndex && this.minIndex == -1;
+	}
 }

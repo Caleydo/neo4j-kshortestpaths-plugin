@@ -9,6 +9,7 @@ import org.neo4j.graphalgo.impl.util.WeightedPathImpl;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
+import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Predicate;
 
 public class KShortestPathsAlgo2 {
@@ -30,12 +31,13 @@ public class KShortestPathsAlgo2 {
 		}
 	}
 
-	public List<Path> run(Node start, Node end, int k, int maxLength, IPathReadyListener onPathReady) {
+	public List<Path> run(Node start, Node end, int k, int maxLength, IPathReadyListener onPathReady, Function<Path,Path> mapper) {
 		debug("start", start.getId(), end.getId(), k, maxLength, this.expander);
 		List<Path> result = new LinkedList<Path>();
 
         //first attempt: classic shortest path
 		for(Path path : new ShortestPath(maxLength, expander).findAllPaths(start, end)) {
+			path = mapper.apply(path);
 			debug("here",path)	;
 			if (!pathAccepter.accept(path)) {
 				debug("dimiss",path);
@@ -62,6 +64,7 @@ public class KShortestPathsAlgo2 {
         //the shortest paths after all). We try with longer path length until we have enough:
         for (int depth = result.get(0).length() + 1; depth <= maxLength && result.size() < k; depth++) {
         	for(Path path : new ShortestPath(depth, expander, Integer.MAX_VALUE, true).findAllPaths(start, end)) {
+        		path = mapper.apply(path);
         		if (!pathAccepter.accept(path)) {
     				debug("dimiss",path);
     				continue; //dismiss result

@@ -7,7 +7,10 @@ import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.helpers.Pair;
 
 public class PathConstraints {
 	public static IPathConstraint parse(Map<String,Object> obj) {
@@ -90,9 +93,17 @@ public class PathConstraints {
 		return TRUE;
 	}
 
-	private static final IPathConstraint TRUE = new TrueConstraint();
+	private static final TrueConstraint TRUE = new TrueConstraint();
 	
-	static class TrueConstraint implements IPathConstraint {
+	static class TrueConstraint implements IConstraint {
+		@Override
+		public boolean accept(Node node, Relationship rel) {
+			return true;
+		}
+		@Override
+		public void toCypher(StringBuilder b, String var) {
+			
+		}
 		@Override
 		public SortedSet<MatchRegion> matches(Path path) {
 			SortedSet<MatchRegion> r = new TreeSet<MatchRegion>();
@@ -103,5 +114,73 @@ public class PathConstraints {
 		public boolean accept(Path path) {
 			return true;
 		}
+	}
+	
+	public static List<IPathConstraint> flatten(IPathConstraint c) {
+		List<IPathConstraint> flat = new ArrayList<IPathConstraint>();
+		flatten(c, flat);
+		return flat;
+	}
+	
+	private static void flatten(IPathConstraint c, List<IPathConstraint> r) {
+		r.add(c);
+		if (c instanceof ICompositePathContraint) {
+			for(IPathConstraint p : ((ICompositePathContraint) c).children()) {
+				flatten(p, r);
+			}
+		}
+	}
+	
+	
+	public static Pair<IConstraint,IConstraint> getStartEndConstraints(IPathConstraint p) {
+		List<IPathConstraint> flat = flatten(p);
+		IConstraint perElem = getPerElemConstraint(p);
+		
+		List<IConstraint> start = new ArrayList<IConstraint>();
+		List<IConstraint> end = new ArrayList<IConstraint>();
+		
+		if (perElem != null && perElem != TRUE) {
+			start.add(perElem);
+			end.add(perElem);
+		}
+		
+		for(IPathConstraint c : flat) {
+			if (c instanceof RegionMatcher) {
+				RegionMatcher m = (RegionMatcher)c;
+				if (m.isStartRegion()) {
+					start.add((IConstraint)m.getConstraint());
+				}
+				if (m.isEndRegion()) {
+					end.add((IConstraint)m.getConstraint());
+				}
+			}
+		}
+		return Pair.of(combine(start), combine(end));
+	}
+	
+	//just and and direct elem constraints
+	public static IConstraint getPerElemConstraint(IPathConstraint p) {
+		if (p instanceof ElemConstraint) {
+			return (IConstraint)p;
+		}
+		if (p instanceof CompositePathConstraint && ((CompositePathConstraint) p).isAnd) {
+			List<IConstraint> r = new ArrayList<IConstraint>();
+			for(IPathConstraint pi : ((CompositePathConstraint)p).children()) {
+				IConstraint ri = getPerElemConstraint(pi);
+				if (ri != null) {
+					r.add(ri);
+				}
+			}
+			return combine(r);
+		}
+		return TRUE;
+	}
+
+	private static IConstraint combine(List<IConstraint> start) {
+		if (start.isEmpty()) {
+			return null;
+		}
+		if (start.size() == 1) { return start.get(0); }
+		return new CompositePathConstraint(false, start);
 	}
 }

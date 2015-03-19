@@ -1,6 +1,7 @@
 package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.SortedSet;
 
 import org.neo4j.graphdb.Path;
@@ -12,6 +13,10 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 	public RegionMatcher(MatchRegion region, IPathConstraint c) {
 		this.region = region;
 		this.c = c;
+	}
+	
+	public IPathConstraint getConstraint() {
+		return c;
 	}
 
 	@Override
@@ -35,5 +40,22 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 			matches.clear();
 		}
 		return matches;
+	}
+
+	public boolean isStartRegion() {
+		return this.region.isStart() && areAllConstraints();
+	}
+	public boolean isEndRegion() {
+		return this.region.isEnd() && areAllConstraints();
+	}
+
+	private boolean areAllConstraints() {
+		List<IPathConstraint> list = PathConstraints.flatten(c);
+		for(IPathConstraint cc : list) {
+			if (!(cc instanceof IConstraint)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

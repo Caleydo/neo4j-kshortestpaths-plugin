@@ -4,19 +4,21 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.SortedSet;
 
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
 
-public class CompositePathConstraint implements ICompositePathContraint {
-	private final List<IPathConstraint> constraints;
-	private final boolean isAnd;
+public class CompositePathConstraint implements ICompositePathContraint, IConstraint {
+	private final List<? extends IPathConstraint> constraints;
+	public final boolean isAnd;
 	
-	public CompositePathConstraint(boolean isAnd, List<IPathConstraint> constraints) {
+	public CompositePathConstraint(boolean isAnd, List<? extends IPathConstraint> constraints) {
 		this.isAnd = isAnd;
 		this.constraints = constraints;
 	}
 	
 	@Override
-	public Iterable<IPathConstraint> children() {
+	public Iterable<? extends IPathConstraint> children() {
 		return constraints;
 	}
 	
@@ -48,5 +50,31 @@ public class CompositePathConstraint implements ICompositePathContraint {
 			}
 		}
 		return MatchRegion.from(total);
+	}
+	
+	@Override
+	public boolean accept(Node node, Relationship rel) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	
+	@Override
+	public void toCypher(StringBuilder b, String var) {
+		b.append("(");
+		String in = isAnd ? " and " : " or ";
+		boolean first = true;
+		for(IPathConstraint c : constraints) {
+			if (!(c instanceof IConstraint)) {
+				continue;
+			}
+			IConstraint cc = (IConstraint)c;
+			if (!first) {
+				b.append(in);
+			}
+			first = false;
+			cc.toCypher(b, var);
+		}
+		b.append(") ");
 	}
 }

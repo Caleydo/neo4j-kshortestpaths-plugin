@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
@@ -26,7 +27,7 @@ import org.neo4j.graphdb.traversal.TraversalDescription;
 public class FakeGraphDatabase implements GraphDatabaseService {
 	private GraphDatabaseService w;
 	
-	private Map<Long, Relationship> fakes = new HashMap<>();
+	private Map<Long, PropertyContainer> fakes = new HashMap<>();
 
 	public FakeGraphDatabase(GraphDatabaseService w) {
 		super();
@@ -34,6 +35,9 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 	}
 	
 	public void putFake(Relationship fake) {
+		fakes.put(fake.getId(), fake);
+	}
+	public void putFake(Node fake) {
 		fakes.put(fake.getId(), fake);
 	}
 
@@ -53,13 +57,16 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 
 	@Override
 	public Node getNodeById(long id) {
+		if (hasFake(id)) {
+			return (Node) fakes.get(id);
+		}
 		return w.getNodeById(id);
 	}
 
 	@Override
 	public Relationship getRelationshipById(long id) {
 		if (hasFake(id)) {
-			return fakes.get(id);
+			return (Relationship) fakes.get(id);
 		}
 		return w.getRelationshipById(id);
 	}
@@ -156,13 +163,16 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 	}
 
 	public Node inject(Node source) {
-		return new FakeNode(source);
+		if (source instanceof FakeNode) {
+			return source;
+		}
+		return new FakeHelperNode(source);
 	}
 	
-	class FakeNode implements Node {
+	class FakeHelperNode implements Node {
 		private final Node w;
 
-		public FakeNode(Node w) {
+		public FakeHelperNode(Node w) {
 			super();
 			this.w = w;
 		}
