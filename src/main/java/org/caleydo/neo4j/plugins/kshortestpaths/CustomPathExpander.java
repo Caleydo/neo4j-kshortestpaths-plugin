@@ -1,5 +1,6 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,8 +11,8 @@ import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.FakeSetRelationshipFactory;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.IFakeRelationshipFactory;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.NodeConstraints;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.RelConstraints;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PathConstraint;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PathConstraint.IIntermediate;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
@@ -30,16 +31,16 @@ import org.neo4j.helpers.collection.Iterables;
 public class CustomPathExpander implements PathExpander<Object>, Predicate<Path> {
 	
 	private final DirectionContraints directions;
-	private final NodeConstraints nodeConstraints;
-	private final RelConstraints relConstraints;
+	private final PathConstraint constraints;
 	private final InlineRelationships inline;
 	
 	private Set<Long> extraIgnoreNodes;
 	
 	private boolean debug = false;
+	private boolean intermediatePaths = true;
 
-	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> nodeContraints,List<Map<String,Object>> relContraints, Map<String,Object> inline, FakeGraphDatabase db) {
-		this(new DirectionContraints(directions), new NodeConstraints(nodeContraints), new RelConstraints(relContraints), of(inline, db));
+	public CustomPathExpander(Map<String,String> directions, List<Map<String,Object>> constraints, Map<String,Object> inline, FakeGraphDatabase db) {
+		this(new DirectionContraints(directions), PathConstraint.of(constraints), of(inline, db));
 	}
 	
 	public void setDebug(boolean debug) {
@@ -61,13 +62,16 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 		return new FakeSetRelationshipFactory(desc.get("flag").toString(), desc.get("aggregate").toString(), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()), db);
 	}
 
-	public CustomPathExpander(DirectionContraints directions, NodeConstraints nodeContraints,RelConstraints relConstraints, InlineRelationships inline) {
+	public CustomPathExpander(DirectionContraints directions, PathConstraint constraints, InlineRelationships inline) {
 		super();
 		this.directions = directions;
-		this.nodeConstraints = nodeContraints;
-		this.relConstraints = relConstraints;
+		this.constraints = constraints;b
 		this.inline = inline;
 		
+	}
+	
+	public void setIntermediatePaths(boolean intermediatePaths) {
+		this.intermediatePaths = intermediatePaths;
 	}
 	
 	public void setExtraIgnoreNodes(Set<Long> extraIgnoreNodes) {
@@ -76,7 +80,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	
 	@Override
 	public boolean accept(Path path) {
-		return this.nodeConstraints.isValid(path.nodes()) && this.relConstraints.isValid(path.relationships());
+		return this.constraints.accept(path.nodes(), path.relationships());
 	}
 	
 	private void debug(Object ... args) {
@@ -87,32 +91,39 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	
 	@Override
 	public Iterable<Relationship> expand(final Path path, BranchState<Object> state) {
-		final Predicate<Node> goodNode = this.nodeConstraints.prepare(Iterables.<Node>empty()); //path.nodes());
-		final Predicate<Relationship> goodRel = this.relConstraints.prepare(Iterables.<Relationship>empty()); //path.relationships());
+		final IIntermediate good = this.constraints.prepare(nodes(path), rels(path));
 		final Node endNode = path.endNode();
 		Iterable<Relationship> base = getRelationships(endNode);
 		return new FilteringIterable<>(base, new Predicate<Relationship>() {
 			@Override
 			public boolean accept(Relationship item) {
-				if (!goodRel.accept(item)) {
-					debug("test: "+item+" bad rel");
+				Node added = item.getOtherNode(endNode);
+				if (!good.accept(item, added)) {
+					debug("test: "+item+" bad");
 					return false;
 				}
-				Node added = item.getOtherNode(endNode);
 				if (extraIgnoreNodes != null && extraIgnoreNodes.contains(added.getId())) {
 					return false;
 				}
-				boolean r= goodNode.accept(added);
-				if (!r) {
-					debug("test: "+added+" bad node");
-				} else {
-					debug("test: "+item+" "+added+" good");
-				}
-				return r;
+				return true;
 			}
 		});
 	}
 
+
+	private Iterable<Relationship> rels(Path path) {
+		if (intermediatePaths) {
+			return path.relationships();
+		}
+		return Iterables.<Relationship>empty();
+	}
+
+	private Iterable<Node> nodes(Path path) {
+		if (intermediatePaths) {
+			return path.nodes();
+		}
+		return Arrays.asList(path.endNode());
+	}
 
 	public Iterable<Relationship> getRelationships(final Node endNode) {
 		Iterable<Relationship> base = this.directions.filter(endNode);
@@ -124,7 +135,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 
 	@Override
 	public PathExpander<Object> reverse() {
-		return new CustomPathExpander(this.directions.reverse(), this.nodeConstraints, this.relConstraints, inline);
+		return new CustomPathExpander(this.directions.reverse(), this.constraints, inline);
 	}
 	
 	
@@ -132,8 +143,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	public String toString() {
 		StringBuilder b = new StringBuilder();
 		b.append("CustomPathExpander {");
-		b.append("node: ").append(nodeConstraints);
-		b.append(" rel: ").append(relConstraints);
+		b.append(" c: ").append(constraints);
 		b.append(" dir: ").append(directions);
 		b.append(" inline: ").append(inline);
 		b.append('}');

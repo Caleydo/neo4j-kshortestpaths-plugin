@@ -11,12 +11,12 @@ import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.Predicates;
 import org.neo4j.helpers.collection.Iterables;
 
-public abstract class OperatorConstraint implements Predicate<Object>{
+public abstract class ValueConstraint implements Predicate<Object>{
 	
 	private static Function<Map<String, Object>, Predicate<Object>> toPredicate = new Function<Map<String, Object>, Predicate<Object>>() {
 		@Override
 		public Predicate<Object> apply(Map<String, Object> from) {
-			return parse(from);
+			return of(from);
 		}
 	};
 
@@ -35,7 +35,7 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 
 	protected abstract boolean acceptImpl(Object value);
 
-	public static Predicate<Object> parse(Map<String, Object> desc) {
+	public static Predicate<Object> of(Map<String, Object> desc) {
 		List<Predicate<Object>> cs = new ArrayList<>();
 		for(String key : desc.keySet()) {
 			if (key.startsWith("$")) {
@@ -56,6 +56,8 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 			return Predicates.or(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
 		case "and":
 			return Predicates.and(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
+		case "not": 
+			return Predicates.not(of((Map<String,Object>)desc));
 		case "eq":
 		case "equal":
 			return eq(desc);
@@ -73,7 +75,7 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 		return new EqualPredicate(value);
 	}
 	
-	static class EqualPredicate extends OperatorConstraint {
+	static class EqualPredicate extends ValueConstraint {
 
 		private Object eq;
 
@@ -91,8 +93,7 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 				return Arrays.deepEquals((Object[])value, (Object[])this.eq);
 			}
 			return Objects.equals(value, this.eq);
-		}	
-
+		}
 		
 		@Override
 		public void toString(StringBuilder b) {
@@ -101,7 +102,7 @@ public abstract class OperatorConstraint implements Predicate<Object>{
 		
 	}
 	
-	static class ContainsPredicate extends OperatorConstraint {
+	static class ContainsPredicate extends ValueConstraint {
 
 		private Object in;
 

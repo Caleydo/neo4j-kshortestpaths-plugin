@@ -78,10 +78,9 @@ public class KShortestPaths extends ServerPlugin {
 	@SuppressWarnings("unchecked")
 	static CustomPathExpander toExpander(Map<String,Object> c, FakeGraphDatabase db) {
 		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
-		List<Map<String,Object>> nodeContraints= (List<Map<String, Object>>) (c == null ? null : c.get("node"));
-		List<Map<String,Object>> relConstraints= (List<Map<String, Object>>) (c == null ? null : c.get("rel"));
+		List<Map<String,Object>> constraints = (List<Map<String, Object>>) (c == null ? null : c.get("c"));
 		Map<String,Object> inline = (Map<String,Object>)(c == null ? null : c.get("inline"));
-		return new CustomPathExpander(directions, nodeContraints, relConstraints, inline, db);
+		return new CustomPathExpander(directions, constraints, inline, db);
 	}
 	
 	static WeightedPath slice(WeightedPath path, int start, int end) {

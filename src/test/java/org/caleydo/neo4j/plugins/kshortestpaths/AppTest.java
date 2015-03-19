@@ -14,7 +14,7 @@ import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.FakeSetRelationshipFactory;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.NodeConstraints;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.OperatorConstraint;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.ValueConstraint;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PropertyRelConstraint;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.RelConstraints;
 import org.neo4j.graphalgo.CostEvaluator;
@@ -234,7 +234,7 @@ public class AppTest extends TestCase {
 		System.out.println("just NetworkNodes");
 		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), NodeConstraints.of(), RelConstraints.of(),inline));
 		System.out.println("just NetworkNodes and real isNet edges");
-		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, null, "isNet", OperatorConstraint.eq(true))),inline));
+		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, null, "isNet", ValueConstraint.eq(true))),inline));
 	}
 	
 	public void test0_4() {
