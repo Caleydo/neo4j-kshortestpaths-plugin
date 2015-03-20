@@ -1,5 +1,6 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -40,8 +41,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 		this.constraints = constraints;
 		this.extraNodes = extraNodes;
 		this.perElem = PathConstraints.getPerElemConstraint(constraints);
-		this.inline = inline;
-		
+		this.inline = inline;		
 	}
 	
 	public void setExtraNodes(Iterable<FakeNode> extraNodes) {
@@ -84,28 +84,37 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 				return n.getRelationships();
 			}
 		}
-		Iterable<Relationship> base = getRelationships(endNode);
-		return new FilteringIterable<>(base, new Predicate<Relationship>() {
-			@Override
-			public boolean accept(Relationship item) {
-				Node added = item.getOtherNode(endNode);
-				for(FakeNode n : extraNodes) { //keep fake nodes
-					if (n.equals(added)) {
-						debug("keep fake node: "+n);
-						return true;
+		try {
+			Iterable<Relationship> base = getRelationships(endNode);
+			List<Relationship> s = Iterables.toList(new FilteringIterable<>(base, new Predicate<Relationship>() {
+				@Override
+				public boolean accept(Relationship item) {
+					Node added = item.getOtherNode(endNode);
+					for(FakeNode n : extraNodes) { //keep fake nodes
+						if (n.equals(added)) {
+							debug("keep fake node: "+n);
+							return true;
+						}
 					}
+					if (!perElem.accept(added, item)) {
+						debug("test: "+added+" bad");
+						return false;
+					}				
+					if (extraIgnoreNodes != null && extraIgnoreNodes.contains(added.getId())) {
+						return false;
+					}
+					debug("accept: ",added,item);
+					return true;
 				}
-				if (!perElem.accept(added, item)) {
-					debug("test: "+added+" bad");
-					return false;
-				}				
-				if (extraIgnoreNodes != null && extraIgnoreNodes.contains(added.getId())) {
-					return false;
-				}
-				debug("accept: ",added,item);
-				return true;
-			}
-		});
+			}));
+			debug("RESOLVED: ",endNode, s.size());
+			return s;
+		} catch (RuntimeException e) {
+			System.out.println("error"+e);
+			e.printStackTrace();
+		}
+		return Iterables.empty();
+		
 	}
 
 
@@ -127,7 +136,12 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 
 	@Override
 	public PathExpander<Object> reverse() {
-		return new CustomPathExpander(this.directions.reverse(), this.constraints, inline, extraNodes);
+		debug("create reversed version", this.directions.reverse());
+		CustomPathExpander p = new CustomPathExpander(this.directions.reverse(), this.constraints, inline, extraNodes);
+		p.setDebug(debug);
+		p.setExtraIgnoreNodes(extraIgnoreNodes);
+		p.setExtraNodes(extraNodes);
+		return p;
 	}
 	
 	

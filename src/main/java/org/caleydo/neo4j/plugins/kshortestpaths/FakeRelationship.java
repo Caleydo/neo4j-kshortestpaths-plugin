@@ -34,8 +34,14 @@ public class FakeRelationship implements Relationship {
 	}
 
 	public static long id(Node s, Node t) {
+		long a = s.getId();
+		long b = t.getId();
+		if (a > b) { //by convention smaller first for undirected ones
+			b = s.getId();
+			a = t.getId();
+		}
 		// heuristic combined both and negate
-		long id = (1 << 17)  + (s.getId() << 16) + t.getId();
+		long id = (1 << 17)  + (a << 16) + b;
 		return id;
 	}
 

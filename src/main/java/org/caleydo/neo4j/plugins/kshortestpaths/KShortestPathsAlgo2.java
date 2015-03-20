@@ -56,16 +56,18 @@ public class KShortestPathsAlgo2 {
 				break;
 			}
 		}
-		debug("ended",result);
+		debug("ended",checkedLength, result);
 
         //If there are no results, there will never be any. If there are enough, then we just return them:
         if (checkedLength < 0 || result.size() >= k) {
+        	debug("abort search",checkedLength, result);
             return result;
         }
 
         //Now, we have some results, but not enough. All the resulting paths so far must have the same length (they are
         //the shortest paths after all). We try with longer path length until we have enough:
         for (int depth = checkedLength + 1; depth <= maxLength && result.size() < k; depth++) {
+        	debug("check depth: ",depth);
         	for(Path path : new ShortestPath(depth, expander, Integer.MAX_VALUE, true).findAllPaths(start, end)) {
         		path = mapper.apply(path);
         		if (!pathAccepter.accept(path)) {
@@ -82,6 +84,7 @@ public class KShortestPathsAlgo2 {
     			}
     		}
         }
+        debug("finally done: ",result);
         return result;
 	}
 	

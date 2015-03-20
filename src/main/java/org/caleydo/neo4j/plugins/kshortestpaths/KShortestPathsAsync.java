@@ -97,7 +97,7 @@ public class KShortestPathsAsync {
 								writer.flush();
 							} catch (IOException e) {
 								//can't write the connection was closed -> abort
-								System.err.println("connection closed");
+								System.out.println("connection closed");
 								e.printStackTrace();
 								throw new ConnectionClosedException();
 							}
@@ -106,9 +106,13 @@ public class KShortestPathsAsync {
 					
 					runImpl(k, maxDepth, algorithm, costFunction, debug, st.first(), st.other(), listener, db, expander);
 				} catch(ConnectionClosedException e) {
+					System.out.println("connection closed"+e);
 					e.printStackTrace();
+					e.printStackTrace(System.out);
 				} catch(RuntimeException e) {
+					System.out.println("exception"+e);
 					e.printStackTrace();
+					e.printStackTrace(System.out);
 				}finally {
 					if (tx != null) {
 						tx.failure();
@@ -157,7 +161,7 @@ public class KShortestPathsAsync {
 			r = engine.execute(b.toString()).columnAs("n");
 			
 		}
-		return new FakeNode(dir == Direction.OUTGOING ? -1 : -2, db, dir, r);
+		return new FakeNode(dir == Direction.OUTGOING ? 1 << 20 : 3 << 20, db, dir, r);
 	}
 
 	
