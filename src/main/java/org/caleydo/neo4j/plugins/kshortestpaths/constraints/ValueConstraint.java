@@ -58,9 +58,14 @@ public abstract class ValueConstraint implements Predicate<Object>{
 			return and(Iterables.map(toPredicate, (Iterable<Map<String,Object>>)desc));
 		case "not": 
 			return not(of((Map<String,Object>)desc));
+		case "neq":
+		case "not-equal":
+			return not(eq(desc));
 		case "eq":
 		case "equal":
 			return eq(desc);
+		case "not-contains":
+			return not(contains(desc));
 		case "contains":
 			return contains(desc);
 		}

@@ -58,4 +58,9 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 		}
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "RegionMatcher [c=" + c + ", region=" + region + "]";
+	}
 }

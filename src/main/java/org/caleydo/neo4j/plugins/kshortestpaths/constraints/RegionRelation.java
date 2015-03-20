@@ -119,5 +119,11 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 	public static IRegionRelationOperation AFTER = new AfterRegionRelation();
 	public static IRegionRelationOperation EQUAL = new EqualRegionRelation();
 	public static IRegionRelationOperation SEQUENCE = new SequenceRegionRelation();
+
+
+	@Override
+	public String toString() {
+		return "RegionRelation [a=" + a + ", b=" + b + ", op=" + op + "]";
+	}
 	
 }

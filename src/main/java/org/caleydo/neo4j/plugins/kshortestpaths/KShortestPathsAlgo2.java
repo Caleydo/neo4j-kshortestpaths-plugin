@@ -32,12 +32,16 @@ public class KShortestPathsAlgo2 {
 	}
 
 	public List<Path> run(Node start, Node end, int k, int maxLength, IPathReadyListener onPathReady, Function<Path,Path> mapper) {
-		debug("start", start.getId(), end.getId(), k, maxLength, this.expander);
+		debug("start", start.getId(), end.getId(), "k", k, "maxLength", maxLength, this.expander);
 		List<Path> result = new LinkedList<Path>();
+		
+		int delta = 0;
 
         //first attempt: classic shortest path
 		for(Path path : new ShortestPath(maxLength, expander).findAllPaths(start, end)) {
+			int prev = path.length();
 			path = mapper.apply(path);
+			delta = prev - path.length();
 			debug("here",path)	;
 			if (!pathAccepter.accept(path)) {
 				debug("dimiss",path);
@@ -62,14 +66,14 @@ public class KShortestPathsAlgo2 {
 
         //Now, we have some results, but not enough. All the resulting paths so far must have the same length (they are
         //the shortest paths after all). We try with longer path length until we have enough:
-        for (int depth = result.get(0).length() + 1; depth <= maxLength && result.size() < k; depth++) {
+        for (int depth = result.get(0).length() + 1 + delta; depth <= maxLength && result.size() < k; depth++) {
         	for(Path path : new ShortestPath(depth, expander, Integer.MAX_VALUE, true).findAllPaths(start, end)) {
         		path = mapper.apply(path);
         		if (!pathAccepter.accept(path)) {
-    				debug("dimiss",path);
+    				debug("dimiss length "+depth,path);
     				continue; //dismiss result
     			}
-    			debug("found", path);
+    			debug("found length "+depth, path);
     			result.add(path);
     			if(onPathReady != null) {
     				onPathReady.onPathReady(new WeightedPathImpl(path.length(), path));

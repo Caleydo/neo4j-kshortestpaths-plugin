@@ -62,7 +62,9 @@ public class InlineRelationships {
 		for (Relationship s : rels) {
 			//System.out.println(s+" "+s.getStartNode()+" "+s.getEndNode()+" "+s.getEndNode().equals(source));
 			Node toInline = s.getOtherNode(source);
+			debug(s.getType(), s.getEndNode(), !skip(toInline));
 			if (s.isType(type) && s.getEndNode().equals(source) && !skip(toInline)) { //just incoming edges
+				//debug("try to inline: "+toInline);
 				for(Relationship i : toInline.getRelationships(type)) {
 					if (i.equals(s)) {
 						continue;
@@ -74,6 +76,7 @@ public class InlineRelationships {
 				existing.add(toInline.getId());	
 			}
 		}
+		//debug("to fake",m, bad, existing);
 		m.remove(source.getId()); //not self loops
 		for(Long ex : existing) { //remove all existing ones
 			m.remove(ex);
@@ -81,7 +84,7 @@ public class InlineRelationships {
 		if (m.isEmpty()) { //nothing to do
 			return bad;
 		}
-		debug("faking",m);
+		//debug("faking",m);
 		//System.out.println(m);
 		
 		@SuppressWarnings("unchecked")

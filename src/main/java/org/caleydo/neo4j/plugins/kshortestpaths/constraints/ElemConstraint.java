@@ -80,8 +80,14 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 		return nodeContext ? node : rel;
 	}
 
+	@Override
 	public void toCypher(StringBuilder b, String var) {
 		String key = this.selector.toCypher(var, isNodeContext());
 		this.constraint.toCypher(key, b);
+	}
+
+	@Override
+	public String toString() {
+		return "ElemConstraint [selector=" + selector + ", constraint=" + constraint + ", nodeContext=" + nodeContext + "]";
 	}
 }

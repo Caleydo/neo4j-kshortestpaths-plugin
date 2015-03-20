@@ -143,7 +143,7 @@ public class FakeRelationship implements Relationship {
 
 	@Override
 	public String toString() {
-		return "FakeRelationship[" + this.getId() + this.getStartNode()+" "+this.getEndNode()+" "+this.properties + "]";
+		return "FakeRelationship[" + this.getId() + this.getStartNode()+" "+this.getEndNode()+ "]";
 	}
 
 }

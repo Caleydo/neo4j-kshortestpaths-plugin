@@ -15,6 +15,11 @@ public class MatchRegion implements Comparable<MatchRegion> {
 		this.maxIndex = maxIndex;	
 	}
 	
+	@Override
+	public String toString() {
+		return "MatchRegion [minIndex=" + minIndex + ", maxIndex=" + maxIndex + "]";
+	}
+
 	public MatchRegion toAbs(int length) {
 		return new MatchRegion(getMinIndex(length), getMaxIndex(length));
 	}

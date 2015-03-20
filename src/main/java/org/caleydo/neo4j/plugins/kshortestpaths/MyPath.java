@@ -63,4 +63,9 @@ public class MyPath implements Path {
 		return Iterables.concat(nodes, rels).iterator();
 	}
 
+	@Override
+	public String toString() {
+		return "MyPath [nodes=" + nodes + ", rels=" + rels + "]";
+	}
+
 }

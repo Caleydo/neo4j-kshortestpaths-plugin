@@ -60,6 +60,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	
 	public void setDebug(boolean debug) {
 		this.debug = debug;
+		this.inline.setDebug(debug);
 	}
 	
 	
@@ -76,11 +77,24 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	@Override
 	public Iterable<Relationship> expand(final Path path, BranchState<Object> state) {
 		final Node endNode = path.endNode();
+		debug("resolve relationships: "+endNode);
+		for(FakeNode n : extraNodes) {
+			if (n.equals(endNode)) {
+				debug("found start/end: "+endNode);
+				return n.getRelationships();
+			}
+		}
 		Iterable<Relationship> base = getRelationships(endNode);
 		return new FilteringIterable<>(base, new Predicate<Relationship>() {
 			@Override
 			public boolean accept(Relationship item) {
 				Node added = item.getOtherNode(endNode);
+				for(FakeNode n : extraNodes) { //keep fake nodes
+					if (n.equals(added)) {
+						debug("keep fake node: "+n);
+						return true;
+					}
+				}
 				if (!perElem.accept(added, item)) {
 					debug("test: "+added+" bad");
 					return false;
@@ -88,6 +102,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 				if (extraIgnoreNodes != null && extraIgnoreNodes.contains(added.getId())) {
 					return false;
 				}
+				debug("accept: ",added,item);
 				return true;
 			}
 		});
@@ -95,21 +110,18 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 
 
 	public Iterable<Relationship> getRelationships(final Node node) {
+		Iterable<Relationship> base = Iterables.toList(this.directions.filter(node));
 		for(FakeNode n : extraNodes) {
-			if (n.equals(node)) {
-				return n.getRelationships();
-			}
-		}
-		Iterable<Relationship> base = this.directions.filter(node);
-		for(FakeNode n : extraNodes) {
-			if (n.equals(node)) {
+			if (n.hasRelationship(node)) {
+				debug("add fake relationship back"+n+" "+node);
 				base = Iterables.concat(base, Iterables.iterable(n.getRelationship(node)));
 			}
 		}
-		
+		debug("rels: "+Iterables.toList(base));
 		if (inline != null) {
 			base = inline.inline(base, node);
 		}
+		//debug("inlined rels: "+Iterables.toList(base));
 		return base;
 	}
 

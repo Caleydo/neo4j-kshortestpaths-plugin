@@ -18,6 +18,11 @@ public class CompositePathConstraint implements ICompositePathContraint, IConstr
 	}
 	
 	@Override
+	public String toString() {
+		return "CompositePathConstraint [constraints=" + constraints + ", isAnd=" + isAnd + "]";
+	}
+
+	@Override
 	public Iterable<? extends IPathConstraint> children() {
 		return constraints;
 	}

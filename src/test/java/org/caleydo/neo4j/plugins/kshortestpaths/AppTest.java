@@ -1,8 +1,11 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
+import static org.caleydo.neo4j.plugins.kshortestpaths.KShortestPathsAsync.resolveNodes;
+import static org.caleydo.neo4j.plugins.kshortestpaths.KShortestPathsAsync.runImpl;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
 import junit.framework.Assert;
 import junit.framework.Test;
@@ -10,16 +13,8 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.FileUtils;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships.FakeSetRelationshipFactory;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.NodeConstraints;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.ValueConstraint;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PropertyRelConstraint;
-import org.caleydo.neo4j.plugins.kshortestpaths.constraints.RelConstraints;
-import org.neo4j.graphalgo.CostEvaluator;
+import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphalgo.WeightedPath;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -29,9 +24,9 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.tooling.GlobalGraphOperations;
-
 /**
  * Unit test for simple App.
  */
@@ -203,25 +198,35 @@ public class AppTest extends TestCase {
 		}
 	}
 
-	private List<WeightedPath> run(Node source, Node target, int k, CustomPathExpander expander) {
+	private void run(Node source, Node target, int k, String contraints) {
 
 		Transaction tx = graphDb.beginTx();
 
-		CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(null);
-
-		KShortestPathsAlgo algo = new KShortestPathsAlgo(expander, costEvaluator);
-
-		List<WeightedPath> paths = algo.run(source, target, k);
-
-		
-		for (WeightedPath path : paths) {
-			System.out.println(Iterables.toList(path.nodes()));
+		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+		CustomPathExpander expander = KShortestPaths.toExpander(contraints.replace('\'', '"'), db ,Collections.<FakeNode>emptyList());
+		expander.setDebug(false);
+		ExecutionEngine engine = new ExecutionEngine(graphDb);
+		Pair<FakeNode,FakeNode> st = resolveNodes(source.getId(), target.getId(), expander.getConstraints(), db, engine);
+		if (st == null || st.first() == null || st.other() == null) {
+			return;
 		}
-
+		
+		expander.setExtraNodes(Iterables.iterable(st.first(), st.other()));
+		IPathReadyListener listener = new IPathReadyListener() {
+			@Override
+			public void onPathReady(WeightedPath path) {
+				System.out.println(path);
+			}
+		};
+		try {
+			runImpl(k, 100, null,null,true, st.first(), st.other(), listener, db, expander);
+			System.out.println("END");
+		} catch (RuntimeException e ) {
+			e.printStackTrace();
+		}
 		tx.success();
 		tx.close();
 		
-		return paths;
 	}
 	
 	/**
@@ -229,24 +234,11 @@ public class AppTest extends TestCase {
 	 */
 	public void test0_2() {
 		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
-		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to, db), true, -1);
-		run(_0, _2, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of(),inline));
+		run(_0, _2, 100, "{'inline': {'flag': 'isSet', 'undirectional': false, 'toaggregate': 'name', 'aggregate': 'sets', 'inline': 'consistsOf', 'type': 'to'}, 'dir': {'to': 'out', 'consistsOf': 'in'}}");
+		run(_0, _4, 100, "{'inline': {'flag': 'isSet', 'undirectional': false, 'toaggregate': 'name', 'aggregate': 'sets', 'inline': 'consistsOf', 'type': 'to'}, 'dir': {'to': 'out', 'consistsOf': 'in'}}");
 		System.out.println("just NetworkNodes");
-		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), NodeConstraints.of(), RelConstraints.of(),inline));
+		//run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), PathConstraints.parse(null),inline, new ArrayList<FakeNode>()));
 		System.out.println("just NetworkNodes and real isNet edges");
-		run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, null, "isNet", ValueConstraint.eq(true))),inline));
-	}
-	
-	public void test0_4() {
-		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
-		InlineRelationships inline = new InlineRelationships(consistsOf, new FakeSetRelationshipFactory("isSet","sets","name", to, db), false, -1);
-		//run(_0, _4, 100, new CustomPathExpander(new DirectionContraints(null), NodeConstraints.of(), RelConstraints.of(),inline));
-		System.out.println("just NetworkNodes");
-		//run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(),inline));
-		run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), NodeConstraints.of(), RelConstraints.of(),inline));
-		
-		
-		//System.out.println("just NetworkNodes and real isNet edges");
-		//run(_0, _4, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, "isNet", OperatorConstraint.eq(true))), null));
+		//run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING), NodeConstraints.of(), RelConstraints.of(new PropertyRelConstraint(null, null, "isNet", ValueConstraint.eq(true))),inline));
 	}
 }

@@ -3,9 +3,8 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.ws.rs.GET;
@@ -28,10 +27,10 @@ import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Pair;
+import org.neo4j.helpers.collection.Iterables;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
@@ -76,20 +75,13 @@ public class KShortestPathsAsync {
 					CustomPathExpander expander = KShortestPaths.toExpander(contraints, db ,Collections.<FakeNode>emptyList());
 					expander.setDebug(debug);
 
-					Pair<Node,Node> st = resolveNodes(from, to, expander.getConstraints(), db);
+					Pair<FakeNode,FakeNode> st = resolveNodes(from, to, expander.getConstraints(), db, engine);
 					if (st == null || st.first() == null || st.other() == null) {
 						writer.value("missing start or end");
 						return;
 					}
 					
-					List<FakeNode> l = new ArrayList<>(2);
-					if (st.first() instanceof FakeNode) {
-						l.add((FakeNode)st.first());
-					}
-					if (st.other() instanceof FakeNode) {
-						l.add((FakeNode)st.other());
-					}
-					expander.setExtraNodes(l);
+					expander.setExtraNodes(Iterables.iterable(st.first(), st.other()));
 
 					final Gson gson = new Gson();
 					IPathReadyListener listener = new IPathReadyListener() {
@@ -113,8 +105,10 @@ public class KShortestPathsAsync {
 					
 					runImpl(k, maxDepth, algorithm, costFunction, debug, st.first(), st.other(), listener, db, expander);
 				} catch(ConnectionClosedException e) {
-					
-				} finally {
+					e.printStackTrace();
+				} catch(RuntimeException e) {
+					e.printStackTrace();
+				}finally {
 					if (tx != null) {
 						tx.failure();
 						tx.close();
@@ -130,46 +124,42 @@ public class KShortestPathsAsync {
 		return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
 	}
 
-	protected Pair<Node, Node> resolveNodes(Long from, Long to, IPathConstraint constraints, FakeGraphDatabase db) {
+	public static Pair<FakeNode, FakeNode> resolveNodes(Long from, Long to, IPathConstraint constraints, FakeGraphDatabase db, ExecutionEngine engine) {
 		Pair<IConstraint,IConstraint> c = (from == null || to == null) ? PathConstraints.getStartEndConstraints(constraints) : null;
 		
-		Node source = resolveNode(from, c.first(), Direction.OUTGOING, db);
+		FakeNode source = resolveNode(from, c == null ? null : c.first(), Direction.OUTGOING, db, engine);
 		if (source == null) {
 			return null;
 		}
-		Node target = resolveNode(from, c.other(), Direction.INCOMING, db);
+		FakeNode target = resolveNode(to, c == null ? null : c.other(), Direction.INCOMING, db, engine);
 		if (target == null) {
 			return null;
 		}
 		return Pair.of(source, target);
 	}
 
-	private Node resolveNode(Long id, IConstraint constraint, Direction dir, FakeGraphDatabase db) {
-		Node r = null;
+	public static FakeNode resolveNode(Long id, IConstraint constraint, Direction dir, FakeGraphDatabase db, ExecutionEngine engine) {
+		Iterator<Node> r = null;
 		if (id != null) {
-			r = graphDb.getNodeById(id.longValue());
+			r = Iterables.iterable(db.getNodeById(id.longValue())).iterator();
+		} else {
+			StringBuilder b = new StringBuilder();
+			b.append("MATCH (n) WHERE ");
+			constraint.toCypher(b, "n");
+			b.append(" RETURN n");
+			System.out.println(b.toString());
+			r = engine.execute(b.toString()).columnAs("n");
 		}
-		if (r != null || constraint == null) {
-			return r;
-		}
-		StringBuilder b = new StringBuilder();
-		b.append("MATCH (n) WHERE ");
-		constraint.toCypher(b, "n");
-		b.append(" RETURN n");
-		System.out.println(b.toString());
-		ResourceIterator<Node> nodes = engine.execute(b.toString()).columnAs("n");
-		return new FakeNode(dir == Direction.OUTGOING ? -1 : -2, db, dir, nodes);
+		return new FakeNode(dir == Direction.OUTGOING ? -1 : -2, db, dir, r);
 	}
 
-	public void runImpl(final Integer k, final Integer maxDepth, final String algorithm, final String costFunction, final boolean debug, Node source,
-			Node target, IPathReadyListener listener, FakeGraphDatabase db, CustomPathExpander expander) {
-		source = db.inject(source);
-		target = db.inject(target);
+	public static void runImpl(final Integer k, final Integer maxDepth, final String algorithm, final String costFunction, final boolean debug, FakeNode source,
+			FakeNode target, IPathReadyListener listener, FakeGraphDatabase db, CustomPathExpander expander) {
 		
-		Function<org.neo4j.graphdb.Path, org.neo4j.graphdb.Path> mapper = toMapper(source instanceof FakeNode, target instanceof FakeNode);
+		Function<org.neo4j.graphdb.Path, org.neo4j.graphdb.Path> mapper = toMapper();
 
-		int k_ = k == null ? 1 : k.intValue();
-		int maxDepth_ = maxDepth == null ? 100 : maxDepth.intValue();
+		int k_ = (k == null ? 1 : k.intValue());
+		int maxDepth_ = 2+ (maxDepth == null ? 100 : maxDepth.intValue());
 
 		boolean runShortestPath = StringUtils.contains(algorithm, "shortestPath");
 		boolean runDijsktra = StringUtils.contains(algorithm, "dijkstra");
@@ -189,11 +179,11 @@ public class KShortestPathsAsync {
 		}
 	}
 
-	private Function<org.neo4j.graphdb.Path, org.neo4j.graphdb.Path> toMapper(final boolean source_fake, final boolean target_fake) {
+	private static Function<org.neo4j.graphdb.Path, org.neo4j.graphdb.Path> toMapper() {
 		return new Function<org.neo4j.graphdb.Path, org.neo4j.graphdb.Path>() {
 			@Override
 			public org.neo4j.graphdb.Path apply(org.neo4j.graphdb.Path from) {
-				return KShortestPaths.slice(from, source_fake ? 1 : 0, target_fake ? -2 : -1);
+				return KShortestPaths.slice(from, 1,-2);
 			}
 		};
 	}

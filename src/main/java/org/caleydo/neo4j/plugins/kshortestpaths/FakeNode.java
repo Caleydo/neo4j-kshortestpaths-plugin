@@ -33,6 +33,11 @@ public class FakeNode implements Node {
 	}
 	
 	@Override
+	public String toString() {
+		return "FakeNode [id=" + id + ", onlyType=" + onlyType + ", onlyDir=" + onlyDir+"]";
+	}
+
+	@Override
 	public Iterable<Relationship> getRelationships() {
 		return rels.values();
 	}
@@ -51,6 +56,7 @@ public class FakeNode implements Node {
 			r.put(n.getId(),fake);
 			db.putFake(fake);
 		}
+		System.out.println(onlyDir+" "+r.values());
 		return r;
 	}
 	
