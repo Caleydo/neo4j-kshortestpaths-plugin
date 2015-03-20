@@ -14,6 +14,7 @@ import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeGraphDatabase;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeRelationship;
+import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
@@ -109,6 +110,21 @@ public class InlineRelationships {
 		return node.getId() == notInlineId;
 	}
 
+	
+	public static InlineRelationships of(Map<String,Object> desc, FakeGraphDatabase db) {
+		if (desc == null) {
+			return null;
+		}
+		DynamicRelationshipType type = DynamicRelationshipType.withName(desc.get("inline").toString());
+		boolean undirectional = Objects.equals(desc.get("undirectional"),Boolean.TRUE);
+		long notInlineId = desc.containsKey("dontInline") ? ((Number)desc.get("dontInline")).longValue() : -1;
+		IFakeRelationshipFactory factory = toFactory(desc, db);
+		return new InlineRelationships(type, factory, undirectional, notInlineId);
+	}
+
+	private static IFakeRelationshipFactory toFactory(Map<String, Object> desc, FakeGraphDatabase db) {
+		return new FakeSetRelationshipFactory(desc.get("flag").toString(), desc.get("aggregate").toString(), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()), db);
+	}
 
 
 	public interface IFakeRelationshipFactory {

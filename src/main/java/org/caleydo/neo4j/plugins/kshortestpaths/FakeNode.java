@@ -1,9 +1,8 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
@@ -24,7 +23,7 @@ public class FakeNode implements Node {
 	private final FakeGraphDatabase db;
 	private final RelationshipType onlyType = DynamicRelationshipType.withName("FAKE");
 	private final Direction onlyDir;
-	private final List<Relationship> rels;
+	private Map<Long,Relationship> rels;
 	
 	public FakeNode(long id, FakeGraphDatabase db,Direction onlyDir, Iterator<Node> nodes) {
 		this.id = id;
@@ -35,7 +34,7 @@ public class FakeNode implements Node {
 	
 	@Override
 	public Iterable<Relationship> getRelationships() {
-		return rels;
+		return rels.values();
 	}
 
 	@Override
@@ -43,16 +42,24 @@ public class FakeNode implements Node {
 		return db;
 	}
 	
-	protected List<Relationship> create(Iterator<Node> nodes) {
-		List<Relationship> r = new ArrayList<Relationship>();
+	protected Map<Long,Relationship> create(Iterator<Node> nodes) {
+		Map<Long,Relationship> r = new HashMap<Long, Relationship>();
 		Node n;
 		while (nodes.hasNext()) {
 			n = nodes.next();
 			FakeRelationship fake = new FakeRelationship(db, onlyType, onlyDir == Direction.OUTGOING ? this: n, onlyDir == Direction.INCOMING ? this: n, new HashMap<String, Object>());
-			r.add(fake);
+			r.put(n.getId(),fake);
 			db.putFake(fake);
 		}
 		return r;
+	}
+	
+	public boolean hasRelationship(Node node) {
+		return rels.containsKey(node.getId());
+	}
+	
+	public Relationship getRelationship(Node node) {
+		return rels.get(node.getId());
 	}
 
 

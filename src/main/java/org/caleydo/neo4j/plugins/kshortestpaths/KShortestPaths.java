@@ -1,10 +1,15 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.IPathConstraint;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.InlineRelationships;
+import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PathConstraints;
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -45,7 +50,7 @@ public class KShortestPaths extends ServerPlugin {
 			) {
 
 		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
-		CustomPathExpander expander = toExpander(constraints, db);
+		CustomPathExpander expander = toExpander(constraints, db, Collections.<FakeNode>emptyList());
 
 		Transaction tx = graphDb.beginTx();
 
@@ -71,15 +76,20 @@ public class KShortestPaths extends ServerPlugin {
 	}
 
 
-	static CustomPathExpander toExpander(String constraints, FakeGraphDatabase db) {
-		return toExpander(toMap(constraints), db);
+	static CustomPathExpander toExpander(String constraints, FakeGraphDatabase db, Iterable<FakeNode> extraNodes) {
+		return toExpander(toMap(constraints), db, extraNodes);
 	}
 	@SuppressWarnings("unchecked")
-	static CustomPathExpander toExpander(Map<String,Object> c, FakeGraphDatabase db) {
+	static CustomPathExpander toExpander(Map<String,Object> c, FakeGraphDatabase db, Iterable<FakeNode> extraNodes) {
 		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
 		Map<String,Object> constraints = (Map<String, Object>) (c == null ? null : c.get("c"));
 		Map<String,Object> inline = (Map<String,Object>)(c == null ? null : c.get("inline"));
-		return new CustomPathExpander(directions, constraints, inline, db);
+		
+		DirectionContraints d = new DirectionContraints(directions);
+		IPathConstraint path = PathConstraints.parse(constraints);
+		InlineRelationships rel = InlineRelationships.of(inline, db);
+
+		return new CustomPathExpander(d, path, rel, extraNodes);
 	}
 	
 	static Path slice(Path path, int start, int end) {

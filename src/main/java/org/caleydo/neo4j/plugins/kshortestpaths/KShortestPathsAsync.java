@@ -3,6 +3,9 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.GET;
@@ -70,7 +73,7 @@ public class KShortestPathsAsync {
 					tx = graphDb.beginTx();
 					
 					FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
-					CustomPathExpander expander = KShortestPaths.toExpander(contraints, db);
+					CustomPathExpander expander = KShortestPaths.toExpander(contraints, db ,Collections.<FakeNode>emptyList());
 					expander.setDebug(debug);
 
 					Pair<Node,Node> st = resolveNodes(from, to, expander.getConstraints(), db);
@@ -78,6 +81,15 @@ public class KShortestPathsAsync {
 						writer.value("missing start or end");
 						return;
 					}
+					
+					List<FakeNode> l = new ArrayList<>(2);
+					if (st.first() instanceof FakeNode) {
+						l.add((FakeNode)st.first());
+					}
+					if (st.other() instanceof FakeNode) {
+						l.add((FakeNode)st.other());
+					}
+					expander.setExtraNodes(l);
 
 					final Gson gson = new Gson();
 					IPathReadyListener listener = new IPathReadyListener() {
