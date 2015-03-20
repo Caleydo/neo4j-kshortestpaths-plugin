@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.GET;
@@ -144,15 +145,22 @@ public class KShortestPathsAsync {
 			r = Iterables.iterable(db.getNodeById(id.longValue())).iterator();
 		} else {
 			StringBuilder b = new StringBuilder();
-			b.append("MATCH (n) WHERE ");
+			List<String> labels = PathConstraints.findAndLabels(constraint);
+			b.append("MATCH (n");
+			if (!labels.isEmpty()) {
+				b.append(':').append(StringUtils.join(labels,':'));
+			}
+			b.append(") WHERE ");
 			constraint.toCypher(b, "n");
 			b.append(" RETURN n");
-			System.out.println(b.toString());
+			System.out.println(constraint+" "+b.toString());
 			r = engine.execute(b.toString()).columnAs("n");
+			
 		}
 		return new FakeNode(dir == Direction.OUTGOING ? -1 : -2, db, dir, r);
 	}
 
+	
 	public static void runImpl(final Integer k, final Integer maxDepth, final String algorithm, final String costFunction, final boolean debug, FakeNode source,
 			FakeNode target, IPathReadyListener listener, FakeGraphDatabase db, CustomPathExpander expander) {
 		

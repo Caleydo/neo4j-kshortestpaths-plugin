@@ -1,6 +1,7 @@
 package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -134,15 +135,9 @@ public class PathConstraints {
 	
 	public static Pair<IConstraint,IConstraint> getStartEndConstraints(IPathConstraint p) {
 		List<IPathConstraint> flat = flatten(p);
-		IConstraint perElem = getPerElemConstraint(p);
 		
 		List<IConstraint> start = new ArrayList<IConstraint>();
 		List<IConstraint> end = new ArrayList<IConstraint>();
-		
-		if (perElem != null && perElem != TRUE) {
-			start.add(perElem);
-			end.add(perElem);
-		}
 		
 		for(IPathConstraint c : flat) {
 			if (c instanceof RegionMatcher) {
@@ -155,7 +150,17 @@ public class PathConstraints {
 				}
 			}
 		}
-		return Pair.of(combine(start), combine(end));
+		IConstraint start_c = combine(start, false);
+		IConstraint end_c = combine(end, false);
+
+
+		IConstraint perElem = getPerElemConstraint(p);
+		if (perElem != null && perElem != TRUE) {
+			start_c = combine(Arrays.asList(start_c, perElem),true);
+			end_c = combine(Arrays.asList(end_c, perElem),true);
+		}
+		
+		return Pair.of(start_c, end_c);
 	}
 	
 	//just and and direct elem constraints
@@ -167,20 +172,35 @@ public class PathConstraints {
 			List<IConstraint> r = new ArrayList<IConstraint>();
 			for(IPathConstraint pi : ((CompositePathConstraint)p).children()) {
 				IConstraint ri = getPerElemConstraint(pi);
-				if (ri != null) {
+				if (ri != null && ri != TRUE) {
 					r.add(ri);
 				}
 			}
-			return combine(r);
+			return combine(r, true);
 		}
 		return TRUE;
 	}
 
-	private static IConstraint combine(List<IConstraint> start) {
+	private static IConstraint combine(List<IConstraint> start, boolean and) {
 		if (start.isEmpty()) {
 			return null;
 		}
 		if (start.size() == 1) { return start.get(0); }
-		return new CompositePathConstraint(false, start);
+		return new CompositePathConstraint(and, start);
+	}
+	
+	public static List<String> findAndLabels(IConstraint c) {
+		List<String> r = new ArrayList<String>();
+		if (c instanceof CompositePathConstraint && ((CompositePathConstraint) c).isAnd) {
+			for(IPathConstraint p : ((CompositePathConstraint) c).children()) {
+				r.addAll(findAndLabels((IConstraint)p));
+			}
+		} else if (c instanceof ElemConstraint) {
+			String l = ((ElemConstraint) c).getLabels();
+			if (l != null) {
+				r.add(l);
+			}
+		}
+		return r;
 	}
 }

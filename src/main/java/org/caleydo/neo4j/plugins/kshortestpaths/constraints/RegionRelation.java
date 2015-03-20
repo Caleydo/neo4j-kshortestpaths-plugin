@@ -26,7 +26,7 @@ class SequenceRegionRelation implements IRegionRelationOperation {
 		SortedSet<MatchRegion> r = new TreeSet<>();
 		for(MatchRegion ai : a) {
 			int s = ai.getMinIndex(length);
-			int m =ai.getMaxIndex(length) +1 ;
+			int m = ai.getMaxIndex(length) +1 ;
 			for(MatchRegion bi : b) {
 				if (bi.getMinIndex(length) == m) {
 					r.add(new MatchRegion(s, bi.getMaxIndex(length)));
@@ -107,7 +107,9 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 		if (bs.isEmpty()) {
 			return bs;
 		}
-		return this.op.combine(as, bs, path.length());
+		SortedSet<MatchRegion> r = this.op.combine(as, bs, path.length());
+		System.out.println(this.toString()+' '+r+' '+as+' '+bs);
+		return r;
 	}
 
 	@Override

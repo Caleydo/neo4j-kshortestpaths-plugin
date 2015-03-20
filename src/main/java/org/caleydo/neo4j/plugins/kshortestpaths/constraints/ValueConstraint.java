@@ -191,12 +191,16 @@ public abstract class ValueConstraint implements Predicate<Object>{
 		
 	}
 	
-	static class ContainsPredicate extends ValueConstraint {
+	public static class ContainsPredicate extends ValueConstraint {
 
 		private Object in;
 
 		public ContainsPredicate(Object value) {
 			this.in = value;
+		}
+		
+		public Object getIn() {
+			return in;
 		}
 		
 		@Override

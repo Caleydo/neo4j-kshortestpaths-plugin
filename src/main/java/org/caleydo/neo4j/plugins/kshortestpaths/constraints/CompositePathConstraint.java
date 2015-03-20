@@ -59,8 +59,15 @@ public class CompositePathConstraint implements ICompositePathContraint, IConstr
 	
 	@Override
 	public boolean accept(Node node, Relationship rel) {
-		// TODO Auto-generated method stub
-		return false;
+		for(IPathConstraint c : constraints) {
+			if (!(c instanceof IConstraint)) {
+				continue;
+			}
+			if (isAnd != ((IConstraint)c).accept(node, rel)) {
+				return !isAnd;
+			}
+		}
+		return isAnd;
 	}
 	
 	

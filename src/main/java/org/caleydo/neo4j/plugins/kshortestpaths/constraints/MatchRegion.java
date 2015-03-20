@@ -65,14 +65,14 @@ public class MatchRegion implements Comparable<MatchRegion> {
 
 	public int getMinIndex(int length) {
 		if (minIndex < 0) {
-			return length - minIndex;
+			return length + minIndex;
 		}
 		return minIndex;
 	}
 	
 	public int getMaxIndex(int length) {
 		if (maxIndex < 0) {
-			return length - maxIndex;
+			return length + maxIndex;
 		}
 		return maxIndex;
 	}

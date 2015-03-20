@@ -33,6 +33,7 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 	public SortedSet<MatchRegion> matches(Path path) {
 		SortedSet<MatchRegion> matches = this.c.matches(path);
 		MatchRegion r = this.region.toAbs(path.length());
+		System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches);
 		if (matches.contains(r)) {
 			matches.clear();
 			matches.add(r);

@@ -23,6 +23,19 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 	public boolean isNodeContext() {
 		return this.nodeContext;
 	}
+	
+	public String getLabels() {
+		if (!this.nodeContext) {
+			return null;
+		}
+		if(selector != LabelSelector.INSTANCE) {
+			return null;
+		}
+		if (constraint instanceof ValueConstraint.ContainsPredicate) {
+			return (String)((ValueConstraint.ContainsPredicate) constraint).getIn();
+		}
+		return null;
+	}
 		
 	@Override
 	public boolean accept(Node node, Relationship rel) {
@@ -51,6 +64,7 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 			}
 			c+=1; //for the last fake one
 		}
+		System.out.println(this.toString()+' '+c);
 		return c > 0;
 	}
 	
@@ -73,6 +87,7 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 				i++;
 			}
 		}
+		System.out.println(this.toString()+' '+r);
 		return r;
 	}
 
