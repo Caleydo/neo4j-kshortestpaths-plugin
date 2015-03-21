@@ -173,7 +173,7 @@ public class InlineRelationships {
 						
 			Map<String,Object> properties = new HashMap<String, Object>();
 			properties.put(flag, true);
-			properties.put("inlined", inline.toString());
+			//properties.put("inlined", inline.toString());
 			String[] r = new String[inline.size()];
 			
 			int i = 0;
