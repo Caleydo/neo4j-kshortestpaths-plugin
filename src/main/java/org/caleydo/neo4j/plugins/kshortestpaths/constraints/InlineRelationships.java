@@ -15,6 +15,7 @@ import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeGraphDatabase;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeRelationship;
 import org.neo4j.graphdb.DynamicRelationshipType;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
@@ -126,7 +127,7 @@ public class InlineRelationships {
 	}
 
 	private static IFakeRelationshipFactory toFactory(Map<String, Object> desc, FakeGraphDatabase db) {
-		return new FakeSetRelationshipFactory(desc.get("flag").toString(), desc.get("aggregate").toString(), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()), db);
+		return new FakeSetRelationshipFactory(desc.get("flag").toString(), (Map<String, String>) desc.get("aggregate"), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()), db);
 	}
 
 
@@ -139,16 +140,16 @@ public class InlineRelationships {
 	public static class FakeSetRelationshipFactory implements IFakeRelationshipFactory{
 
 		private final String flag;
-		private final String aggregate;
 		private final String aggregateInlined;
 		private final RelationshipType type;
 		private final FakeGraphDatabase w;
 		private boolean debug;
+		private final Map<String, String> aggregateByLabel;
 		
-		public FakeSetRelationshipFactory(String flag, String aggregate, String aggregateInlined, RelationshipType type, FakeGraphDatabase w) {
+		public FakeSetRelationshipFactory(String flag, Map<String,String> aggregateByLabel, String aggregateInlined, RelationshipType type, FakeGraphDatabase w) {
 			super();
 			this.flag = flag;
-			this.aggregate = aggregate;
+			this.aggregateByLabel = aggregateByLabel;
 			this.aggregateInlined = aggregateInlined;
 			this.type = type;
 			this.w = w;
@@ -159,12 +160,13 @@ public class InlineRelationships {
 			this.debug = debug;
 		}		
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public Relationship create(Collection<Pair<Relationship, Relationship>> inline, boolean reverse) {
 			Pair<Relationship, Relationship> next = inline.iterator().next();
-			Pair<Node,Node> st = resolve(next);
-			Node source = st.first();
-			Node target = st.other();
+			Node[] sit = resolve(next);
+			Node source = sit[0];
+			Node target = sit[2];
 			
 			long id = FakeRelationship.id(reverse ? target : source, reverse ? source : target);
 			if (w.hasFake(id)) {
@@ -174,20 +176,25 @@ public class InlineRelationships {
 			Map<String,Object> properties = new HashMap<String, Object>();
 			properties.put(flag, true);
 			//properties.put("inlined", inline.toString());
-			String[] r = new String[inline.size()];
+			MultiMap m = new MultiValueMap();
 			
-			int i = 0;
 			for(Pair<Relationship, Relationship> p : inline) {
-				r[i++] = Objects.toString(p.first().getOtherNode(source).getProperty(aggregateInlined));
+				Node inlined = p.first().getOtherNode(source);
+				for(Label l : inlined.getLabels()) {
+					if (aggregateByLabel.containsKey(l.name())) {
+						m.put(aggregateByLabel.get(l.name()), inlined.getProperty(aggregateInlined));
+					}
+				}
 			}
-			properties.put(aggregate, r);
-			
+			for(Object key : m.keySet()) {
+				properties.put(key.toString(), Iterables.toArray(String.class, (Collection<String>)m.get(key)));
+			}
 			Relationship rel = new FakeRelationship(source.getGraphDatabase(),type, reverse ? target : source, reverse ? source : target, properties);
 			w.putFake(rel);
 			return rel;
 		}
 
-		private Pair<Node, Node> resolve(Pair<Relationship, Relationship> next) {
+		private Node[] resolve(Pair<Relationship, Relationship> next) {
 			
 			Relationship first = next.first();
 			Relationship other = next.other();
@@ -196,22 +203,13 @@ public class InlineRelationships {
 			Node c = other.getStartNode();
 			Node d = other.getEndNode();
 			if (a.getId() == c.getId()) 
-				return Pair.of(b,d);
+				return new Node[]{ b, a, d};
 			else if (a.getId() == d.getId())
-				return Pair.of(b,c);
+				return new Node[]{ b, a, c};
 			else if (b.getId() == c.getId())
-				return Pair.of(a, d);
-			return Pair.of(a, c);
-		}
-
-
-		@Override
-		public String toString() {
-			return "FakeSetRelationshipFactory [flag=" + flag + ", aggregate="
-					+ aggregate + ", aggregateInlined=" + aggregateInlined
-					+ ", type=" + type + "]";
-		}
-		
+				return new Node[]{ a, c, d};
+			return new Node[]{ a, b, c};
+		}		
 		
 	}
 }
