@@ -21,13 +21,15 @@ public class PathConstraints {
 		if (obj.containsKey("$region")) {
 			MatchRegion r = toRegion(obj.get("$region"));
 			obj.remove("$region");
-			return new RegionMatcher(r, parse(obj));
+			return new RegionMatcher(r, parse(obj), toOperation(obj.get("$relate")));
 		} else if (obj.containsKey("$context")) {
 			return parseElem(obj);
 		} else if (obj.containsKey("$and")) {
 			return new CompositePathConstraint(true, asList(obj.get("$and")));
 		} else if (obj.containsKey("$or")) {
 			return new CompositePathConstraint(false, asList(obj.get("$or")));
+		} else if (obj.containsKey("$not")) {
+			return new NotPathConstraint(parse(obj.get("$not")));
 		} else if (obj.containsKey("$relate")) {
 			return new RegionRelation(parse(obj.get("a")), parse(obj.get("b")), toOperation(obj.get("$relate")));
 		}
@@ -44,6 +46,12 @@ public class PathConstraints {
 		}
 		if (v.startsWith("g") || v.startsWith("a")) {
 			return RegionRelation.AFTER;
+		}
+		if (v.startsWith("l") || v.startsWith("b")) {
+			return RegionRelation.BEFORE;
+		}
+		if (v.startsWith("n") || v.startsWith("u")) {
+			return RegionRelation.UNEQUAL;
 		}
 		
 		return RegionRelation.EQUAL;

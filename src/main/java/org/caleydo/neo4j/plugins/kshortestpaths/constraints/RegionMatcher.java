@@ -3,16 +3,19 @@ package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.neo4j.graphdb.Path;
 
 public class RegionMatcher implements ICompositePathContraint, ISequenceDependentConstraint {
 	private final IPathConstraint c;
 	private final MatchRegion region;
+	private final IRegionRelationOperation op;
 
-	public RegionMatcher(MatchRegion region, IPathConstraint c) {
+	public RegionMatcher(MatchRegion region, IPathConstraint c, IRegionRelationOperation op) {
 		this.region = region;
 		this.c = c;
+		this.op = op;
 	}
 	
 	public IPathConstraint getConstraint() {
@@ -33,12 +36,12 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 	public SortedSet<MatchRegion> matches(Path path) {
 		SortedSet<MatchRegion> matches = this.c.matches(path);
 		MatchRegion r = this.region.toAbs(path.length());
-		System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches);
-		if (matches.contains(r)) {
-			matches.clear();
-			matches.add(r);
-		} else {
-			matches.clear();
+		//System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches);
+		SortedSet<MatchRegion> result = new TreeSet<MatchRegion>();
+		for(MatchRegion m : matches) {
+			if (op.match(m, r, path.length())) {
+				result.add(m);
+			}
 		}
 		return matches;
 	}

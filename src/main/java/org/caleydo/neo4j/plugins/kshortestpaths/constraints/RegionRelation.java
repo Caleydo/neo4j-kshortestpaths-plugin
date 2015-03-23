@@ -8,6 +8,8 @@ import org.neo4j.graphdb.Path;
 
 interface IRegionRelationOperation {
 	SortedSet<MatchRegion> combine(SortedSet<MatchRegion> a, SortedSet<MatchRegion> b, int length);
+	
+	boolean match(MatchRegion a, MatchRegion b, int length);
 }
 
 class EqualRegionRelation implements IRegionRelationOperation {
@@ -16,6 +18,22 @@ class EqualRegionRelation implements IRegionRelationOperation {
 			SortedSet<MatchRegion> b, int length) {
 		a.retainAll(b); //keep identical ones
 		return a;
+	}
+	@Override
+	public boolean match(MatchRegion a, MatchRegion b, int length) {
+		return a.toAbs(length).equals(b.toAbs(length));
+	}
+}
+class UnEqualRegionRelation implements IRegionRelationOperation {
+	@Override
+	public SortedSet<MatchRegion> combine(SortedSet<MatchRegion> a,
+			SortedSet<MatchRegion> b, int length) {
+		a.removeAll(b); //keep identical ones
+		return a;
+	}
+	@Override
+	public boolean match(MatchRegion a, MatchRegion b, int length) {
+		return !a.toAbs(length).equals(b.toAbs(length));
 	}
 }
 
@@ -36,6 +54,14 @@ class SequenceRegionRelation implements IRegionRelationOperation {
 		}
 		return r;
 	}
+	@Override
+	public boolean match(MatchRegion ai, MatchRegion bi, int length) {
+		int m = ai.getMaxIndex(length) +1 ;
+		if (bi.getMinIndex(length) == m) {
+				return true;
+			}
+		return false;
+	}
 }
 
 class AfterRegionRelation implements IRegionRelationOperation {
@@ -47,13 +73,47 @@ class AfterRegionRelation implements IRegionRelationOperation {
 			int s = ai.getMinIndex(length);
 			int m =ai.getMaxIndex(length);
 			for(MatchRegion bi : b) {
-				if (bi.getMinIndex(length) > m) {
+				if (m > bi.getMinIndex(length)) {
 					r.add(new MatchRegion(s, bi.getMaxIndex(length)));
 					break;
 				}
 			}
 		}
 		return r;
+	}
+	@Override
+	public boolean match(MatchRegion ai, MatchRegion bi, int length) {
+		int m =ai.getMaxIndex(length);
+		if (m > bi.getMinIndex(length)) {
+			return true;
+		}
+		return false;
+	}
+}
+class BeforeRegionRelation implements IRegionRelationOperation {
+	@Override
+	public SortedSet<MatchRegion> combine(SortedSet<MatchRegion> a,
+			SortedSet<MatchRegion> b, int length) {
+		SortedSet<MatchRegion> r = new TreeSet<>();
+		for(MatchRegion ai : a) {
+			int s = ai.getMinIndex(length);
+			int m =ai.getMaxIndex(length);
+			for(MatchRegion bi : b) {
+				if (m < bi.getMinIndex(length)) {
+					r.add(new MatchRegion(s, bi.getMaxIndex(length)));
+					break;
+				}
+			}
+		}
+		return r;
+	}
+	@Override
+	public boolean match(MatchRegion ai, MatchRegion bi, int length) {
+		int m =ai.getMaxIndex(length);
+		if (m < bi.getMinIndex(length)) {
+			return true;
+		}
+		return false;
 	}
 }
 
@@ -74,6 +134,16 @@ class OverlapRegionRelation implements IRegionRelationOperation {
 			}
 		}
 		return r;
+	}
+	@Override
+	public boolean match(MatchRegion ai, MatchRegion bi, int length) {
+		int s = ai.getMinIndex(length);
+		int m = ai.getMaxIndex(length);
+		int bmin = bi.getMinIndex(length);
+		if (bmin >= s && bmin <= m) {
+			return true;
+		}
+		return false;
 	}
 }
 
@@ -119,7 +189,9 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 	
 	public static IRegionRelationOperation OVERLAP = new OverlapRegionRelation();
 	public static IRegionRelationOperation AFTER = new AfterRegionRelation();
+	public static IRegionRelationOperation BEFORE = new BeforeRegionRelation();
 	public static IRegionRelationOperation EQUAL = new EqualRegionRelation();
+	public static IRegionRelationOperation UNEQUAL = new UnEqualRegionRelation();
 	public static IRegionRelationOperation SEQUENCE = new SequenceRegionRelation();
 
 
