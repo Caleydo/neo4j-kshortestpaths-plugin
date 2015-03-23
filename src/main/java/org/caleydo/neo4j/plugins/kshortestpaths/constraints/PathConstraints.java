@@ -21,7 +21,9 @@ public class PathConstraints {
 		if (obj.containsKey("$region")) {
 			MatchRegion r = toRegion(obj.get("$region"));
 			obj.remove("$region");
-			return new RegionMatcher(r, parse(obj), toOperation(obj.get("$relate")));
+			IRegionRelationOperation op = toOperation(obj.get("$relate"));
+			obj.remove("$relate");
+			return new RegionMatcher(r, parse(obj), op);
 		} else if (obj.containsKey("$context")) {
 			return parseElem(obj);
 		} else if (obj.containsKey("$and")) {

@@ -36,13 +36,13 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 	public SortedSet<MatchRegion> matches(Path path) {
 		SortedSet<MatchRegion> matches = this.c.matches(path);
 		MatchRegion r = this.region.toAbs(path.length());
-		//System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches);
 		SortedSet<MatchRegion> result = new TreeSet<MatchRegion>();
 		for(MatchRegion m : matches) {
 			if (op.match(m, r, path.length())) {
 				result.add(m);
 			}
 		}
+		System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches+" "+result);
 		return matches;
 	}
 
@@ -65,6 +65,8 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 
 	@Override
 	public String toString() {
-		return "RegionMatcher [c=" + c + ", region=" + region + "]";
+		return "RegionMatcher [c=" + c + ", region=" + region + ", op=" + op + "]";
 	}
+
+	
 }

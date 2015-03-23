@@ -50,4 +50,11 @@ public class NotPathConstraint implements ICompositePathContraint, IConstraint {
 			b.append(") ");
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "NotPathConstraint [constraint=" + constraint + "]";
+	}
+	
+	
 }

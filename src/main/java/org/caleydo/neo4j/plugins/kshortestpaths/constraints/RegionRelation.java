@@ -16,7 +16,16 @@ class EqualRegionRelation implements IRegionRelationOperation {
 	@Override
 	public SortedSet<MatchRegion> combine(SortedSet<MatchRegion> a,
 			SortedSet<MatchRegion> b, int length) {
-		a.retainAll(b); //keep identical ones
+		SortedSet<MatchRegion> r = new TreeSet<>();
+		for(MatchRegion ai : a) {
+			MatchRegion aa = ai.toAbs(length);
+			for(MatchRegion bi : b) {
+				if (bi.toAbs(length).equals(aa)) {
+					r.add(aa);
+					break;
+				}
+			}
+		}
 		return a;
 	}
 	@Override
@@ -28,7 +37,16 @@ class UnEqualRegionRelation implements IRegionRelationOperation {
 	@Override
 	public SortedSet<MatchRegion> combine(SortedSet<MatchRegion> a,
 			SortedSet<MatchRegion> b, int length) {
-		a.removeAll(b); //keep identical ones
+		SortedSet<MatchRegion> r = new TreeSet<>();
+		for(MatchRegion ai : a) {
+			MatchRegion aa = ai.toAbs(length);
+			for(MatchRegion bi : b) {
+				if (!bi.toAbs(length).equals(aa)) {
+					r.add(aa);
+					break;
+				}
+			}
+		}
 		return a;
 	}
 	@Override
