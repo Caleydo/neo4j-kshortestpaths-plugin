@@ -60,7 +60,9 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	
 	public void setDebug(boolean debug) {
 		this.debug = debug;
-		this.inline.setDebug(debug);
+		if (this.inline != null) {
+			this.inline.setDebug(debug);
+		}
 	}
 	
 	
