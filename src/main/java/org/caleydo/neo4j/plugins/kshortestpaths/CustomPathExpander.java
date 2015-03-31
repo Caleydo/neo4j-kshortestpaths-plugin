@@ -35,10 +35,14 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	private boolean debug = false;
 	private Iterable<FakeNode> extraNodes;
 
-	public CustomPathExpander(DirectionContraints directions, IPathConstraint constraints, InlineRelationships inline, Iterable<FakeNode> extraNodes) {
+	public CustomPathExpander(DirectionContraints directions, IPathConstraint constraints, InlineRelationships inline, Iterable<FakeNode> extraNodes, boolean acyclic) {
 		super();
 		this.directions = directions;
-		this.constraints = constraints;
+		if (acyclic) {
+			this.constraints = PathConstraints.and(constraints, PathConstraints.acyclic);
+		} else {
+			this.constraints = constraints;			
+		}
 		this.extraNodes = extraNodes;
 		this.perElem = PathConstraints.getPerElemConstraint(constraints);
 		this.inline = inline;		
@@ -139,7 +143,7 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	@Override
 	public PathExpander<Object> reverse() {
 		debug("create reversed version", this.directions.reverse());
-		CustomPathExpander p = new CustomPathExpander(this.directions.reverse(), this.constraints, inline, extraNodes);
+		CustomPathExpander p = new CustomPathExpander(this.directions.reverse(), this.constraints, inline, extraNodes, false);
 		p.setDebug(debug);
 		p.setExtraIgnoreNodes(extraIgnoreNodes);
 		p.setExtraNodes(extraNodes);

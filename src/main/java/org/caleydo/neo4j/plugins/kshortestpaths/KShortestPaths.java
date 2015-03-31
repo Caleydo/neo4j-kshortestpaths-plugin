@@ -89,7 +89,7 @@ public class KShortestPaths extends ServerPlugin {
 		IPathConstraint path = PathConstraints.parse(constraints);
 		InlineRelationships rel = InlineRelationships.of(inline, db);
 
-		return new CustomPathExpander(d, path, rel, extraNodes);
+		return new CustomPathExpander(d, path, rel, extraNodes, c.get("acyclic") == Boolean.TRUE);
 	}
 	
 	static Path slice(Path path, int start, int end) {

@@ -2,6 +2,7 @@ package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,6 +15,8 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.helpers.Pair;
 
 public class PathConstraints {
+	public static final IPathConstraint acyclic = new ACyclicPathConstraint();
+
 	public static IPathConstraint parse(Map<String,Object> obj) {
 		if (obj == null || obj.isEmpty()) {
 			return TRUE;
@@ -36,6 +39,19 @@ public class PathConstraints {
 			return new RegionRelation(parse(obj.get("a")), parse(obj.get("b")), toOperation(obj.get("$relate")));
 		}
 		return parseElem(obj);
+	}
+	
+	public static IPathConstraint and(Collection<IPathConstraint> c) {
+		return new CompositePathConstraint(true, c);
+	}
+	public static IPathConstraint or(Collection<IPathConstraint> c) {
+		return new CompositePathConstraint(false, c);
+	}
+	public static IPathConstraint and(IPathConstraint... constraints) {
+		return and(Arrays.asList(constraints));
+	}
+	public static IPathConstraint or(IPathConstraint... constraints) {
+		return or(Arrays.asList(constraints));
 	}
 	
 	private static IRegionRelationOperation toOperation(Object object) {

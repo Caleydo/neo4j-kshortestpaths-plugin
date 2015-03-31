@@ -1,7 +1,7 @@
 package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 
 import java.util.BitSet;
-import java.util.List;
+import java.util.Collection;
 import java.util.SortedSet;
 
 import org.neo4j.graphdb.Node;
@@ -9,10 +9,10 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 
 public class CompositePathConstraint implements ICompositePathContraint, IConstraint {
-	private final List<? extends IPathConstraint> constraints;
+	private final Collection<? extends IPathConstraint> constraints;
 	public final boolean isAnd;
 	
-	public CompositePathConstraint(boolean isAnd, List<? extends IPathConstraint> constraints) {
+	public CompositePathConstraint(boolean isAnd, Collection<? extends IPathConstraint> constraints) {
 		this.isAnd = isAnd;
 		this.constraints = constraints;
 	}
