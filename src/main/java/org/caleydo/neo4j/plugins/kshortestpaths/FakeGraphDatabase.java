@@ -8,9 +8,12 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
+import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.ReturnableEvaluator;
 import org.neo4j.graphdb.StopEvaluator;
 import org.neo4j.graphdb.Transaction;
@@ -353,7 +356,58 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 		public Iterable<Label> getLabels() {
 			return w.getLabels();
 		}
-		
+
+		@Override
+		public Iterable<RelationshipType> getRelationshipTypes() {
+			return w.getRelationshipTypes();
+		}
+
+		@Override
+		public int getDegree() {
+			return w.getDegree();
+		}
+
+		@Override
+		public int getDegree(RelationshipType type) {
+			return w.getDegree(type);
+		}
+
+		@Override
+		public int getDegree(Direction direction) {
+			return w.getDegree(direction);
+		}
+
+		@Override
+		public int getDegree(RelationshipType type, Direction direction) {
+			return w.getDegree(type, direction);
+		}		
 	}
+
+	@Override
+	public Result execute(String query) throws QueryExecutionException {
+		return w.execute(query);
+	}
+
+	@Override
+	public Result execute(String query, Map<String, Object> parameters) throws QueryExecutionException {
+		return w.execute(query, parameters);
+	}
+
+
+	@Override
+	public ResourceIterator<Node> findNodes(Label label, String key, Object value) {
+		return w.findNodes(label, key, value);
+	}
+
+	@Override
+	public Node findNode(Label label, String key, Object value) {
+		return w.findNode(label, key, value);
+	}
+
+	@Override
+	public ResourceIterator<Node> findNodes(Label label) {
+		return w.findNodes(label);
+	}
+	
 	
 }

@@ -1,5 +1,6 @@
 package org.caleydo.neo4j.plugins.kshortestpaths;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -252,5 +253,39 @@ public class FakeNode implements Node {
     {
         return (int) (id ^ (id >>> 32));
     }
+
+	@Override
+	public int getDegree() {
+		return rels.size();
+	}
+	
+	@Override
+	public int getDegree(Direction direction) {
+		if (direction == onlyDir) {
+			return getDegree();
+		}
+		return 0;
+	}
+	
+	@Override
+	public int getDegree(RelationshipType type) {
+		if (onlyType.equals(type)) {
+			return getDegree();
+		}
+		return 0;
+	}
+	
+	@Override
+	public int getDegree(RelationshipType type, Direction direction) {
+		if (onlyType.equals(type) && direction == onlyDir) {
+			return getDegree();
+		}
+		return 0;
+	}
+	
+	@Override
+	public Iterable<RelationshipType> getRelationshipTypes() {
+		return Collections.singleton(onlyType);
+	}
 
 }

@@ -1,25 +1,23 @@
 package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.apache.commons.collections.MultiMap;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeGraphDatabase;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeRelationship;
+import org.neo4j.function.Function;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.collection.Iterables;
 
@@ -59,7 +57,7 @@ public class InlineRelationships {
 		//assumption don't recreate an edge between an already existing one
 		Set<Long> existing = new HashSet<>();
 		Collection<Relationship> bad = new ArrayList<Relationship>();
-		MultiMap m = new MultiValueMap();
+		Map<Long, Collection<Pair<Relationship, Relationship>>> m = new HashMap<>();
 		for (Relationship s : rels) {
 			//System.out.println(s+" "+s.getStartNode()+" "+s.getEndNode()+" "+s.getEndNode().equals(source));
 			Node toInline = s.getOtherNode(source);
@@ -70,7 +68,11 @@ public class InlineRelationships {
 					if (i.equals(s)) {
 						continue;
 					}
-					m.put(i.getOtherNode(toInline).getId(), Pair.of(s, i));
+					Long key = i.getOtherNode(toInline).getId();
+					if (!m.containsKey(key)) {
+						m.put(key,  new ArrayList<Pair<Relationship, Relationship>>());
+					}
+					m.get(key).add(Pair.of(s, i));
 				}
 			} else {
 				bad.add(s);
@@ -88,7 +90,6 @@ public class InlineRelationships {
 		//debug("faking",m);
 		//System.out.println(m);
 		
-		@SuppressWarnings("unchecked")
 		Iterable<Relationship> inlined = Iterables.map(new Function<Map.Entry<Long,Collection<Pair<Relationship, Relationship>>>, Relationship>() {
 			@Override
 			public Relationship apply(Map.Entry<Long, Collection<Pair<Relationship, Relationship>>> from) {
@@ -96,13 +97,12 @@ public class InlineRelationships {
 			}
 		}, m.entrySet());
 		
-		@SuppressWarnings("unchecked")
-		Iterable<Relationship> inlined2 = undirectional ? Iterables.map(new Function<Map.Entry<Node,Collection<Pair<Relationship, Relationship>>>, Relationship>() {
+		Iterable<Relationship> inlined2 = undirectional ? Iterables.map(new Function<Map.Entry<Long,Collection<Pair<Relationship, Relationship>>>, Relationship>() {
 			@Override
-			public Relationship apply(Map.Entry<Node, Collection<Pair<Relationship, Relationship>>> from) {
+			public Relationship apply(Map.Entry<Long, Collection<Pair<Relationship, Relationship>>> from) {
 				return factory.create(from.getValue(), true);
 			}
-		}, m.entrySet()): Arrays.asList();
+		}, m.entrySet()): Collections.<Relationship>emptyList();
 		
 		
 		return Iterables.concat(bad, inlined, inlined2);
@@ -176,18 +176,22 @@ public class InlineRelationships {
 			Map<String,Object> properties = new HashMap<String, Object>();
 			properties.put(flag, true);
 			//properties.put("inlined", inline.toString());
-			MultiMap m = new MultiValueMap();
+			Map<String,Collection<String>> m = new HashMap<String, Collection<String>>();
 			
 			for(Pair<Relationship, Relationship> p : inline) {
 				Node inlined = p.first().getOtherNode(source);
 				for(Label l : inlined.getLabels()) {
 					if (aggregateByLabel.containsKey(l.name())) {
-						m.put(aggregateByLabel.get(l.name()), inlined.getProperty(aggregateInlined));
+						String key = aggregateByLabel.get(l.name());
+						if (!m.containsKey(key)) {
+							m.put(key,  new ArrayList<String>());
+						}
+						m.get(key).add(inlined.getProperty(aggregateInlined).toString());
 					}
 				}
 			}
-			for(Object key : m.keySet()) {
-				properties.put(key.toString(), Iterables.toArray(String.class, (Collection<String>)m.get(key)));
+			for(String key : m.keySet()) {
+				properties.put(key.toString(), Iterables.toArray(String.class, m.get(key)));
 			}
 			Relationship rel = new FakeRelationship(source.getGraphDatabase(),type, reverse ? target : source, reverse ? source : target, properties);
 			w.putFake(rel);
