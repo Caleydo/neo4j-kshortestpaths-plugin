@@ -8,7 +8,7 @@ import org.neo4j.graphdb.Path;
 
 interface IRegionRelationOperation {
 	SortedSet<MatchRegion> combine(SortedSet<MatchRegion> a, SortedSet<MatchRegion> b, int length);
-	
+
 	boolean match(MatchRegion a, MatchRegion b, int length);
 }
 
@@ -170,8 +170,8 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 	private final IPathConstraint a;
 	private final IPathConstraint b;
 	private final IRegionRelationOperation op;
-	
-	
+
+
 	public RegionRelation(IPathConstraint a, IPathConstraint b,
 			IRegionRelationOperation op) {
 		super();
@@ -179,7 +179,7 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 		this.b = b;
 		this.op = op;
 	}
-	
+
 	@Override
 	public boolean accept(Path path) {
 		return !matches(path).isEmpty();
@@ -196,7 +196,7 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 			return bs;
 		}
 		SortedSet<MatchRegion> r = this.op.combine(as, bs, path.length());
-		System.out.println(this.toString()+' '+r+' '+as+' '+bs);
+		// System.out.println(this.toString()+' '+r+' '+as+' '+bs);
 		return r;
 	}
 
@@ -204,7 +204,7 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 	public Iterable<IPathConstraint> children() {
 		return Arrays.asList(a,b);
 	}
-	
+
 	public static IRegionRelationOperation OVERLAP = new OverlapRegionRelation();
 	public static IRegionRelationOperation AFTER = new AfterRegionRelation();
 	public static IRegionRelationOperation BEFORE = new BeforeRegionRelation();
@@ -217,5 +217,5 @@ public class RegionRelation implements ICompositePathContraint,ISequenceDependen
 	public String toString() {
 		return "RegionRelation [a=" + a + ", b=" + b + ", op=" + op + "]";
 	}
-	
+
 }

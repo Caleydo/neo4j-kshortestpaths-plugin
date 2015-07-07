@@ -12,18 +12,18 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 	private final ISelector selector;
 	private final ValueConstraint constraint;
 	private final boolean nodeContext;
-	
+
 	public ElemConstraint(ISelector selector, ValueConstraint constraint, boolean isNodeContext) {
 		super();
 		this.selector = selector;
 		this.constraint = constraint;
 		this.nodeContext = isNodeContext;
 	}
-	
+
 	public boolean isNodeContext() {
 		return this.nodeContext;
 	}
-	
+
 	public String getLabels() {
 		if (!this.nodeContext) {
 			return null;
@@ -36,7 +36,7 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 		}
 		return null;
 	}
-		
+
 	@Override
 	public boolean accept(Node node, Relationship rel) {
 		PropertyContainer c  = select(node, rel);
@@ -46,7 +46,7 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 		Object value = selector.get(c);
 		return constraint.accept(value);
 	}
-	
+
 	@Override
 	public boolean accept(Path path) {
 		int c = 0;
@@ -64,10 +64,10 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 			}
 			c+=1; //for the last fake one
 		}
-		System.out.println(this.toString()+' '+c);
+		// System.out.println(this.toString()+' '+c);
 		return c > 0;
 	}
-	
+
 	@Override
 	public SortedSet<MatchRegion> matches(Path path) {
 		SortedSet<MatchRegion> r = new TreeSet<MatchRegion>();
@@ -87,7 +87,7 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 				i++;
 			}
 		}
-		System.out.println(this.toString()+' '+r);
+		// System.out.println(this.toString()+' '+r);
 		return r;
 	}
 

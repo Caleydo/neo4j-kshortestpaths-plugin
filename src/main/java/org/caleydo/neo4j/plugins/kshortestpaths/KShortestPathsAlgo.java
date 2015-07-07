@@ -68,7 +68,7 @@ public class KShortestPathsAlgo {
 		this.costEvaluator = new InvalidRelationshipCostEvaluator(costEvaluator);
 		this.originalCostEvaluator = costEvaluator;
 		this.shortestPathFinder = GraphAlgoFactory.dijkstra(expander, this.costEvaluator);
-		System.out.println(expander);
+		// System.out.println(expander);
 	}
 	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k) {
 		return run(sourceNode, targetNode, k, null);
@@ -77,7 +77,7 @@ public class KShortestPathsAlgo {
 	public List<WeightedPath> run(Node sourceNode, Node targetNode, int k, IPathReadyListener onPathReady) {
 		StopWatch w = new StopWatch();
 		w.start();
-		
+
 		// Calculate shortest path first
 		List<WeightedPath> paths = new ArrayList<>(k);
 		profile("start", w);
@@ -183,10 +183,10 @@ public class KShortestPathsAlgo {
 			paths.add(nextBest);
 
 		}
-		profile("done", w);		
+		profile("done", w);
 		return paths;
 	}
-	
+
 	private static void profile(String label, StopWatch w) {
 		w.split();
 		//System.err.println(label+": "+w.toSplitString());

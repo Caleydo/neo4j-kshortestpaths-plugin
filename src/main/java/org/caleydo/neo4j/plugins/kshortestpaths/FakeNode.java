@@ -25,14 +25,14 @@ public class FakeNode implements Node {
 	private final RelationshipType onlyType = DynamicRelationshipType.withName("FAKE");
 	private final Direction onlyDir;
 	private Map<Long,Relationship> rels;
-	
+
 	public FakeNode(long id, FakeGraphDatabase db,Direction onlyDir, Iterator<Node> nodes) {
 		this.id = id;
 		this.db = db;
 		this.onlyDir = onlyDir;
 		this.rels = create(nodes);
 	}
-	
+
 	@Override
 	public String toString() {
 		return "FakeNode [id=" + id + ", onlyType=" + onlyType + ", onlyDir=" + onlyDir+"]";
@@ -47,7 +47,7 @@ public class FakeNode implements Node {
 	public GraphDatabaseService getGraphDatabase() {
 		return db;
 	}
-	
+
 	protected Map<Long,Relationship> create(Iterator<Node> nodes) {
 		Map<Long,Relationship> r = new HashMap<Long, Relationship>();
 		Node n;
@@ -57,14 +57,14 @@ public class FakeNode implements Node {
 			r.put(n.getId(),fake);
 			db.putFake(fake);
 		}
-		System.out.println(onlyDir+" "+r.values());
+		// System.out.println(onlyDir+" "+r.values());
 		return r;
 	}
-	
+
 	public boolean hasRelationship(Node node) {
 		return rels.containsKey(node.getId());
 	}
-	
+
 	public Relationship getRelationship(Node node) {
 		return rels.get(node.getId());
 	}
@@ -93,7 +93,7 @@ public class FakeNode implements Node {
 
 	@Override
 	public void setProperty(String key, Object value) {
-				
+
 	}
 
 	@Override
@@ -113,7 +113,7 @@ public class FakeNode implements Node {
 
 	@Override
 	public void delete() {
-		throw new UnsupportedOperationException();		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -149,14 +149,14 @@ public class FakeNode implements Node {
 
 	@Override
 	public Iterable<Relationship> getRelationships(Direction dir) {
-		if (hasRelationship(dir)) 
+		if (hasRelationship(dir))
 			return getRelationships();
 		return Iterables.empty();
 	}
 
 	@Override
 	public Iterable<Relationship> getRelationships(RelationshipType type, Direction dir) {
-		if (hasRelationship(type, dir)) 
+		if (hasRelationship(type, dir))
 			return getRelationships();
 		return Iterables.empty();
 	}
@@ -224,7 +224,7 @@ public class FakeNode implements Node {
 	@Override
 	public void removeLabel(Label label) {
 		throw new UnsupportedOperationException();
-		
+
 	}
 
 	@Override
@@ -236,7 +236,7 @@ public class FakeNode implements Node {
 	public Iterable<Label> getLabels() {
 		return Iterables.empty();
 	}
-	
+
 	@Override
     public boolean equals( Object o )
     {
@@ -258,7 +258,7 @@ public class FakeNode implements Node {
 	public int getDegree() {
 		return rels.size();
 	}
-	
+
 	@Override
 	public int getDegree(Direction direction) {
 		if (direction == onlyDir) {
@@ -266,7 +266,7 @@ public class FakeNode implements Node {
 		}
 		return 0;
 	}
-	
+
 	@Override
 	public int getDegree(RelationshipType type) {
 		if (onlyType.equals(type)) {
@@ -274,7 +274,7 @@ public class FakeNode implements Node {
 		}
 		return 0;
 	}
-	
+
 	@Override
 	public int getDegree(RelationshipType type, Direction direction) {
 		if (onlyType.equals(type) && direction == onlyDir) {
@@ -282,7 +282,7 @@ public class FakeNode implements Node {
 		}
 		return 0;
 	}
-	
+
 	@Override
 	public Iterable<RelationshipType> getRelationshipTypes() {
 		return Collections.singleton(onlyType);

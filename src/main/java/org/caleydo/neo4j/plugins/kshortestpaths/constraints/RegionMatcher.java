@@ -17,7 +17,7 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 		this.c = c;
 		this.op = op;
 	}
-	
+
 	public IPathConstraint getConstraint() {
 		return c;
 	}
@@ -26,7 +26,7 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 	public Iterable<IPathConstraint> children() {
 		return Arrays.asList(c);
 	}
-	
+
 	@Override
 	public boolean accept(Path path) {
 		return !matches(path).isEmpty();
@@ -42,7 +42,7 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 				result.add(m);
 			}
 		}
-		System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches+" "+result);
+		// System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches+" "+result);
 		return matches;
 	}
 
@@ -68,5 +68,5 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 		return "RegionMatcher [c=" + c + ", region=" + region + ", op=" + op + "]";
 	}
 
-	
+
 }
