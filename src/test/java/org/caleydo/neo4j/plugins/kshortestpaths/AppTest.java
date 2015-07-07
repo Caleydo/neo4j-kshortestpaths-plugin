@@ -13,7 +13,6 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.FileUtils;
-import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.DynamicRelationshipType;
@@ -44,11 +43,11 @@ public class AppTest extends TestCase {
 	public Node _5 = null;
 	public Node _6 = null;
 	public Node _7 = null;
-	
+
 
 	RelationshipType consistsOf = DynamicRelationshipType.withName("consistsOf");
 	RelationshipType to = DynamicRelationshipType.withName("to");
-	
+
 	/**
 	 * Create the test case
 	 *
@@ -115,14 +114,14 @@ public class AppTest extends TestCase {
 			s = createSetNode("S");
 			u = createSetNode("U");
 			t = createSetNode("T");
-			
-			
-			
+
+
+
 			partOf(s,consistsOf,_0,_1,_2,_7);
-			
-			
+
+
 			partOf(u,consistsOf,_5,_6);
-			
+
 			partOf(t,consistsOf,_3,_4,_7);
 			_7.setProperty("sets", new String[] { "S", "T" });
 
@@ -130,17 +129,17 @@ public class AppTest extends TestCase {
 			_5.createRelationshipTo(_4,to).setProperty("isNet", true);
 			_0.createRelationshipTo(_5,to).setProperty("isNet", true);
 			_2.createRelationshipTo(_4,to).setProperty("isNet", true);
-			
+
 			//double meaning isNet and isSet
 			Relationship r= _0.createRelationshipTo(_1,to);
 			r.setProperty("isNet", true);
 			r.setProperty("isSet", true);
 			r.setProperty("sets",new String[]{s.getProperty("name").toString()});
-			
+
 //			product(s, to, _0,_2,_7);
 //			product(u, to, _5,_6);
 //			product(t, to, _3,_4,_7);
-//			
+//
 //			for(Node n:  Arrays.asList(_0,_2,_7)) {
 //				r = _1.createRelationshipTo(n,to);
 //				r.setProperty("isSet", true);
@@ -151,7 +150,7 @@ public class AppTest extends TestCase {
 //				r.setProperty("isSet", true);
 //				r.setProperty("sets",new String[]{s.getProperty("name").toString()});
 //			}
-			
+
 			tx_create_graph.success();
 		} catch (Exception e) {
 			tx_create_graph.failure();
@@ -178,7 +177,7 @@ public class AppTest extends TestCase {
 		n.setProperty("sets", new String[0]);
 		return n;
 	}
-	
+
 	private void product(Node set, RelationshipType type, Node ...nodes) {
 		for(Node n : nodes) {
 			for (Node n2 : nodes) {
@@ -205,12 +204,11 @@ public class AppTest extends TestCase {
 		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
 		CustomPathExpander expander = KShortestPaths.toExpander(contraints.replace('\'', '"'), db ,Collections.<FakeNode>emptyList());
 		expander.setDebug(false);
-		ExecutionEngine engine = new ExecutionEngine(graphDb);
-		Pair<FakeNode,FakeNode> st = resolveNodes(source.getId(), target.getId(), expander.getConstraints(), db, engine);
+		Pair<FakeNode, FakeNode> st = resolveNodes(source.getId(), target.getId(), expander.getConstraints(), db);
 		if (st == null || st.first() == null || st.other() == null) {
 			return;
 		}
-		
+
 		expander.setExtraNodes(Iterables.iterable(st.first(), st.other()));
 		IPathReadyListener listener = new IPathReadyListener() {
 			@Override
@@ -226,9 +224,9 @@ public class AppTest extends TestCase {
 		}
 		tx.success();
 		tx.close();
-		
+
 	}
-	
+
 	/**
 	 * Rigourous Test :-)
 	 */

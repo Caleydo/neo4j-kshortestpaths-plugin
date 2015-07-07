@@ -4,16 +4,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.neo4j.function.Function;
 import org.neo4j.graphalgo.impl.path.ShortestPath;
 import org.neo4j.graphalgo.impl.util.WeightedPathImpl;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
-import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Predicate;
 
 public class KShortestPathsAlgo2 {
-	
+
 	private final PathExpander<?> expander;
 	private final Predicate<Path> pathAccepter;
 	private final boolean debug;
@@ -22,9 +22,9 @@ public class KShortestPathsAlgo2 {
 		this.expander = expander;
 		this.pathAccepter = pathAccepter;
 		this.debug = debug;
-		
+
 	}
-	
+
 	private void debug(Object ... args) {
 		if (this.debug) {
 			System.out.println(StringUtils.join(args,' '));
@@ -34,7 +34,7 @@ public class KShortestPathsAlgo2 {
 	public List<Path> run(Node start, Node end, int k, int maxLength, IPathReadyListener onPathReady, Function<Path,Path> mapper) {
 		debug("start", start.getId(), end.getId(), "k", k, "maxLength", maxLength, this.expander);
 		List<Path> result = new LinkedList<Path>();
-		
+
 		int checkedLength = -1;
 
         //first attempt: classic shortest path
@@ -87,7 +87,7 @@ public class KShortestPathsAlgo2 {
         debug("finally done: ",result);
         return result;
 	}
-	
+
 	public interface IPathReadyListener2 {
 		void onPathReady(Path path);
 	}

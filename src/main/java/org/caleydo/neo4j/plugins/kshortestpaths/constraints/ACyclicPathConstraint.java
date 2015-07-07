@@ -14,12 +14,14 @@ public class ACyclicPathConstraint implements IPathConstraint {
 	@Override
 	public boolean accept(Path item) {
 		Set<Long> used = new HashSet<>();
-		int c = 0;
-		for(Node node : item.nodes()) { 
-			used.add(node.getId());
-			c++;
+		for(Node node : item.nodes()) {
+			long id = node.getId();
+			if (used.contains(id)) {
+				return false; // loop
+			}
+			used.add(id);
 		}
-		return used.size() == c;
+		return true;
 	}
 
 	@Override
@@ -30,7 +32,7 @@ public class ACyclicPathConstraint implements IPathConstraint {
 		}
 		return r;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "acyclic";
