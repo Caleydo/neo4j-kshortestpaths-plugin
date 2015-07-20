@@ -28,6 +28,7 @@ import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.collection.Iterables;
@@ -195,5 +196,67 @@ public class KShortestPathsAsync {
 				return KShortestPaths.slice(from, 1,-2);
 			}
 		};
+	}
+
+	@GET
+	@Path("/neighborsOf/{node}")
+	public Response find(@PathParam("node") final Long node, final @QueryParam("constraints") String contraints,
+			@QueryParam("debug") Boolean debugD) {
+		final boolean debug = debugD == Boolean.TRUE;
+		StreamingOutput stream = new StreamingOutput() {
+			@Override
+			public void write(OutputStream os) throws IOException, WebApplicationException {
+				final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
+				writer.beginArray();
+
+				Transaction tx = null;
+				try {
+					tx = graphDb.beginTx();
+
+					FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+					CustomPathExpander expander = KShortestPaths.toExpander(contraints, db,
+							Collections.<FakeNode> emptyList());
+					expander.setDebug(debug);
+
+					Node n = db.getNodeById(node.longValue());
+					if (n == null) {
+						writer.value("missing start or end");
+						return;
+					}
+					final Gson gson = new Gson();
+					for (Relationship r : expander.getRelationships(n)) {
+						Map<String, Object> repr = KShortestPaths.getNodeAsMap(r.getOtherNode(n));
+						try {
+							gson.toJson(repr, Map.class, writer);
+							writer.flush();
+						} catch (IOException e) {
+							// can't write the connection was closed -> abort
+							System.out.println("connection closed");
+							e.printStackTrace();
+							throw new ConnectionClosedException();
+						}
+					}
+				} catch (ConnectionClosedException e) {
+					System.out.println("connection closed" + e);
+					e.printStackTrace();
+					e.printStackTrace(System.out);
+				} catch (RuntimeException e) {
+					System.out.println("exception" + e);
+					e.printStackTrace();
+					e.printStackTrace(System.out);
+				} finally {
+					if (tx != null) {
+						tx.failure();
+						tx.close();
+					}
+					writer.endArray();
+					writer.flush();
+					writer.close();
+				}
+			}
+
+		};
+
+		return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
 	}
 }

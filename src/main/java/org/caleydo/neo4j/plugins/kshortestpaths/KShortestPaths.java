@@ -84,14 +84,14 @@ public class KShortestPaths extends ServerPlugin {
 		Map<String,String> directions = (Map<String, String>) (c == null ? null : c.get("dir"));
 		Map<String,Object> constraints = (Map<String, Object>) (c == null ? null : c.get("c"));
 		Map<String,Object> inline = (Map<String,Object>)(c == null ? null : c.get("inline"));
-		
+
 		DirectionContraints d = new DirectionContraints(directions);
 		IPathConstraint path = PathConstraints.parse(constraints);
 		InlineRelationships rel = InlineRelationships.of(inline, db);
 
-		return new CustomPathExpander(d, path, rel, extraNodes, c.get("acyclic") == Boolean.TRUE);
+		return new CustomPathExpander(d, path, rel, extraNodes, c != null && c.get("acyclic") == Boolean.TRUE);
 	}
-	
+
 	static Path slice(Path path, int start, int end) {
 		if (start ==0 && end == -1) {
 			return path;
@@ -124,7 +124,7 @@ public class KShortestPaths extends ServerPlugin {
 
 		return toMap(path, p);
 	}
-	
+
 	static  Map<String, Object> getPathAsMap(WeightedPath path) {
 		Map<String, Object> p = new HashMap<>();
 		p.put("weight", path.weight());
