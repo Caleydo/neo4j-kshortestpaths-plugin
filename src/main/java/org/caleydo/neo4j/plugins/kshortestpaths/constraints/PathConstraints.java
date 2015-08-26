@@ -23,10 +23,8 @@ public class PathConstraints {
 		}
 		if (obj.containsKey("$region")) {
 			MatchRegion r = toRegion(obj.get("$region"));
-			obj.remove("$region");
 			IRegionRelationOperation op = toOperation(obj.get("$relate"));
-			obj.remove("$relate");
-			return new RegionMatcher(r, parse(obj), op);
+			return new RegionMatcher(r, parse(obj.get("$query")), op);
 		} else if (obj.containsKey("$context")) {
 			return parseElem(obj);
 		} else if (obj.containsKey("$and")) {
@@ -40,7 +38,7 @@ public class PathConstraints {
 		}
 		return parseElem(obj);
 	}
-	
+
 	public static IPathConstraint and(Collection<IPathConstraint> c) {
 		return new CompositePathConstraint(true, c);
 	}
@@ -53,7 +51,7 @@ public class PathConstraints {
 	public static IPathConstraint or(IPathConstraint... constraints) {
 		return or(Arrays.asList(constraints));
 	}
-	
+
 	private static IRegionRelationOperation toOperation(Object object) {
 		String v = object.toString().toLowerCase();
 		if (v.startsWith("m") || v.startsWith("o")) {
@@ -71,7 +69,7 @@ public class PathConstraints {
 		if (v.startsWith("n") || v.startsWith("u")) {
 			return RegionRelation.UNEQUAL;
 		}
-		
+
 		return RegionRelation.EQUAL;
 	}
 
@@ -121,7 +119,7 @@ public class PathConstraints {
 	}
 
 	private static final TrueConstraint TRUE = new TrueConstraint();
-	
+
 	static class TrueConstraint implements IConstraint {
 		@Override
 		public boolean accept(Node node, Relationship rel) {
@@ -129,7 +127,7 @@ public class PathConstraints {
 		}
 		@Override
 		public void toCypher(StringBuilder b, String var) {
-			
+
 		}
 		@Override
 		public SortedSet<MatchRegion> matches(Path path) {
@@ -142,13 +140,13 @@ public class PathConstraints {
 			return true;
 		}
 	}
-	
+
 	public static List<IPathConstraint> flatten(IPathConstraint c) {
 		List<IPathConstraint> flat = new ArrayList<IPathConstraint>();
 		flatten(c, flat);
 		return flat;
 	}
-	
+
 	private static void flatten(IPathConstraint c, List<IPathConstraint> r) {
 		r.add(c);
 		if (c instanceof ICompositePathContraint) {
@@ -157,14 +155,14 @@ public class PathConstraints {
 			}
 		}
 	}
-	
-	
+
+
 	public static Pair<IConstraint,IConstraint> getStartEndConstraints(IPathConstraint p) {
 		List<IPathConstraint> flat = flatten(p);
-		
+
 		List<IConstraint> start = new ArrayList<IConstraint>();
 		List<IConstraint> end = new ArrayList<IConstraint>();
-		
+
 		for(IPathConstraint c : flat) {
 			if (c instanceof RegionMatcher) {
 				RegionMatcher m = (RegionMatcher)c;
@@ -185,10 +183,10 @@ public class PathConstraints {
 			start_c = combine(Arrays.asList(start_c, perElem),true);
 			end_c = combine(Arrays.asList(end_c, perElem),true);
 		}
-		
+
 		return Pair.of(start_c, end_c);
 	}
-	
+
 	//just and and direct elem constraints
 	public static IConstraint getPerElemConstraint(IPathConstraint p) {
 		if (p instanceof ElemConstraint) {
@@ -214,7 +212,7 @@ public class PathConstraints {
 		if (start.size() == 1) { return start.get(0); }
 		return new CompositePathConstraint(and, start);
 	}
-	
+
 	public static List<String> findAndLabels(IConstraint c) {
 		List<String> r = new ArrayList<String>();
 		if (c instanceof CompositePathConstraint && ((CompositePathConstraint) c).isAnd) {
