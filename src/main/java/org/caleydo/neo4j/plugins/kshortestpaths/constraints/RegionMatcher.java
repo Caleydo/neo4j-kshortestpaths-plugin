@@ -43,7 +43,7 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 			}
 		}
 		// System.out.println(this.toString()+' '+r+' '+matches.contains(r)+' '+matches+" "+result);
-		return matches;
+		return result;
 	}
 
 	public boolean isStartRegion() {

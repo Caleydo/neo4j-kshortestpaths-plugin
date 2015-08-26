@@ -32,6 +32,11 @@ class EqualRegionRelation implements IRegionRelationOperation {
 	public boolean match(MatchRegion a, MatchRegion b, int length) {
 		return a.toAbs(length).equals(b.toAbs(length));
 	}
+
+	@Override
+	public String toString() {
+		return "equal";
+	}
 }
 class UnEqualRegionRelation implements IRegionRelationOperation {
 	@Override
@@ -52,6 +57,11 @@ class UnEqualRegionRelation implements IRegionRelationOperation {
 	@Override
 	public boolean match(MatchRegion a, MatchRegion b, int length) {
 		return !a.toAbs(length).equals(b.toAbs(length));
+	}
+
+	@Override
+	public String toString() {
+		return "unequal";
 	}
 }
 
@@ -80,6 +90,11 @@ class SequenceRegionRelation implements IRegionRelationOperation {
 			}
 		return false;
 	}
+
+	@Override
+	public String toString() {
+		return "sequence";
+	}
 }
 
 class AfterRegionRelation implements IRegionRelationOperation {
@@ -107,6 +122,11 @@ class AfterRegionRelation implements IRegionRelationOperation {
 		}
 		return false;
 	}
+
+	@Override
+	public String toString() {
+		return "after";
+	}
 }
 class BeforeRegionRelation implements IRegionRelationOperation {
 	@Override
@@ -132,6 +152,11 @@ class BeforeRegionRelation implements IRegionRelationOperation {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		return "before";
 	}
 }
 
@@ -162,6 +187,11 @@ class OverlapRegionRelation implements IRegionRelationOperation {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		return "overlap";
 	}
 }
 
