@@ -47,10 +47,10 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 	}
 
 	public boolean isStartRegion() {
-		return this.region.isStart() && areAllConstraints();
+		return this.region.isStart() && this.op == RegionRelation.EQUAL && areAllConstraints();
 	}
 	public boolean isEndRegion() {
-		return this.region.isEnd() && areAllConstraints();
+		return this.region.isEnd() && this.op == RegionRelation.EQUAL && areAllConstraints();
 	}
 
 	private boolean areAllConstraints() {
