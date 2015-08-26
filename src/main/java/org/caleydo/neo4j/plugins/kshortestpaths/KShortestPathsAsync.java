@@ -226,6 +226,7 @@ public class KShortestPathsAsync {
 					final Gson gson = new Gson();
 					for (Relationship r : expander.getRelationships(n)) {
 						Map<String, Object> repr = KShortestPaths.getNodeAsMap(r.getOtherNode(n));
+						repr.put("_edge", KShortestPaths.getRelationshipAsMap(r));
 						try {
 							gson.toJson(repr, Map.class, writer);
 							writer.flush();
