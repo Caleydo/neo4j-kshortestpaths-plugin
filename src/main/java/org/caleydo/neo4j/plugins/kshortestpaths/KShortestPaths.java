@@ -151,8 +151,8 @@ public class KShortestPaths extends ServerPlugin {
 	static  Map<String, Object> getNodeAsMap(Node node) {
 		Map<String, Object> n = new HashMap<>();
 		n.put("id", node.getId());
-		n.put("labels", getNodeLabels(node));
-		n.put("properties", getPropertyMap(node));
+		// n.put("labels", getNodeLabels(node));
+		// n.put("properties", getPropertyMap(node));
 		return n;
 	}
 
@@ -162,7 +162,7 @@ public class KShortestPaths extends ServerPlugin {
 		r.put("type", relationship.getType().name());
 		r.put("sourceNodeId", relationship.getStartNode().getId());
 		r.put("targetNodeId", relationship.getEndNode().getId());
-		r.put("properties", getPropertyMap(relationship));
+		// r.put("properties", getPropertyMap(relationship));
 
 		return r;
 	}
