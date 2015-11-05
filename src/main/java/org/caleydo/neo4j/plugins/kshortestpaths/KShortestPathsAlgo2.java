@@ -52,9 +52,10 @@ public class KShortestPathsAlgo2 {
 				onPathReady.onPathReady(new WeightedPathImpl(path.length(), path));
 			}
 
-			if (result.size() >= k) {
-				break;
-			}
+			// dont abort within one distance
+			// if (result.size() >= k) {
+			// break;
+			// }
 		}
 		debug("ended",checkedLength, result);
 
@@ -79,9 +80,10 @@ public class KShortestPathsAlgo2 {
     			if(onPathReady != null) {
     				onPathReady.onPathReady(new WeightedPathImpl(path.length(), path));
     			}
-    			if (result.size() >= k) {
-    				break;
-    			}
+
+				// if (result.size() >= k) {
+				// break;
+				// }
     		}
         }
         debug("finally done: ",result);
