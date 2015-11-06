@@ -217,7 +217,7 @@ public class AppTest extends TestCase {
 			}
 		};
 		try {
-			runImpl(k, 100, null,null,true, st.first(), st.other(), listener, db, expander);
+			runImpl(k, 100, null, null, true, st.first(), st.other(), listener, db, expander, 0);
 			System.out.println("END");
 		} catch (RuntimeException e ) {
 			e.printStackTrace();

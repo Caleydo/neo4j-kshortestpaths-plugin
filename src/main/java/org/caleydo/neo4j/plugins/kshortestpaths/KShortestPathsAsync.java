@@ -46,16 +46,17 @@ public class KShortestPathsAsync {
 
 	@GET
 	@Path("/")
-	public Response find(final @QueryParam("k") Integer k,
+	public Response find(final @QueryParam("k") Integer k, final @QueryParam("minLength") Integer minLength,
 			final @QueryParam("maxDepth") Integer maxDepth, final @QueryParam("constraints") String contraints,
 			@QueryParam("algorithm") final String algorithm,
 			@QueryParam("costFunction") final String costFunction, @QueryParam("debug") Boolean debugD) {
-		return findGiven(null,null, k, maxDepth, contraints, algorithm, costFunction, debugD);
+		return findGiven(null, null, k, minLength, maxDepth, contraints, algorithm, costFunction, debugD);
 	}
 
 	@GET
 	@Path("/{from}/{to}")
-	public Response findGiven(@PathParam("from") final Long from, @PathParam("to") final Long to, final @QueryParam("k") Integer k,
+	public Response findGiven(@PathParam("from") final Long from, @PathParam("to") final Long to,
+			final @QueryParam("k") Integer k, final @QueryParam("minLength") Integer minLength,
 			final @QueryParam("maxDepth") Integer maxDepth, final @QueryParam("constraints") String contraints,
 			@QueryParam("algorithm") final String algorithm,
 			@QueryParam("costFunction") final String costFunction, @QueryParam("debug") Boolean debugD) {
@@ -102,7 +103,8 @@ public class KShortestPathsAsync {
 						}
 					};
 
-					runImpl(k, maxDepth, algorithm, costFunction, debug, st.first(), st.other(), listener, db, expander);
+					runImpl(k, maxDepth, algorithm, costFunction, debug, st.first(), st.other(), listener, db,
+							expander, minLength);
 				} catch(ConnectionClosedException e) {
 					System.out.println("connection closed"+e);
 					e.printStackTrace();
@@ -164,11 +166,13 @@ public class KShortestPathsAsync {
 
 
 	public static void runImpl(final Integer k, final Integer maxDepth, final String algorithm, final String costFunction, final boolean debug, FakeNode source,
-			FakeNode target, IPathReadyListener listener, FakeGraphDatabase db, CustomPathExpander expander) {
+ FakeNode target,
+			IPathReadyListener listener, FakeGraphDatabase db, CustomPathExpander expander, Integer minLength) {
 
 		Function<org.neo4j.graphdb.Path, org.neo4j.graphdb.Path> mapper = toMapper();
 
 		int k_ = (k == null ? 1 : k.intValue());
+		int minLength_ = (minLength == null ? 0 : minLength.intValue());
 		int maxDepth_ = 2+ (maxDepth == null ? 100 : maxDepth.intValue());
 
 		boolean runShortestPath = StringUtils.contains(algorithm, "shortestPath");
@@ -179,7 +183,7 @@ public class KShortestPathsAsync {
 		}
 		if (runShortestPath) {
 			KShortestPathsAlgo2 algo = new KShortestPathsAlgo2(expander, expander, debug);
-			algo.run(source, target, k_, maxDepth_, listener, mapper);
+			algo.run(source, target, k_, minLength_, maxDepth_, listener, mapper);
 		}
 		if (runDijsktra) {
 			CostEvaluator<Double> costEvaluator = new EdgePropertyCostEvaluator(costFunction);

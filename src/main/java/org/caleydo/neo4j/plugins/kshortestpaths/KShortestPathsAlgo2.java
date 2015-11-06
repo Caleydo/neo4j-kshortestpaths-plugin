@@ -31,33 +31,41 @@ public class KShortestPathsAlgo2 {
 		}
 	}
 
-	public List<Path> run(Node start, Node end, int k, int maxLength, IPathReadyListener onPathReady, Function<Path,Path> mapper) {
-		debug("start", start.getId(), end.getId(), "k", k, "maxLength", maxLength, this.expander);
+	public List<Path> run(Node start, Node end, int k, int minLength, int maxLength, IPathReadyListener onPathReady,
+			Function<Path, Path> mapper) {
+		debug("start", start.getId(), end.getId(), "k", k, "minLength", minLength, "maxLength", maxLength,
+				this.expander);
 		List<Path> result = new LinkedList<Path>();
 
 		int checkedLength = -1;
 
-        //first attempt: classic shortest path
-		for (Path path : GraphAlgoFactory.shortestPath(expander, maxLength).findAllPaths(start, end)) {
-			checkedLength = path.length(); //we have checked this length but may not accept it
-			path = mapper.apply(path);
-			debug("here",path)	;
-			if (!pathAccepter.accept(path)) {
-				debug("dimiss",path);
-				continue; //dismiss result
-			}
-			debug("found", path);
-			result.add(path);
-			if (onPathReady != null) {
-				onPathReady.onPathReady(new WeightedPathImpl(path.length(), path));
-			}
+		if (minLength <= 0) {
+			// we search for the minimal one first
+			// first attempt: classic shortest path
+			for (Path path : GraphAlgoFactory.shortestPath(expander, maxLength).findAllPaths(start, end)) {
+				checkedLength = path.length(); // we have checked this length but may not accept it
+				path = mapper.apply(path);
+				debug("here", path);
+				if (!pathAccepter.accept(path)) {
+					debug("dimiss", path);
+					continue; // dismiss result
+				}
+				debug("found", path);
+				result.add(path);
+				if (onPathReady != null) {
+					onPathReady.onPathReady(new WeightedPathImpl(path.length(), path));
+				}
 
-			// dont abort within one distance
-			// if (result.size() >= k) {
-			// break;
-			// }
+				// dont abort within one distance
+				// if (result.size() >= k) {
+				// break;
+				// }
+			}
+			debug("ended", checkedLength, result);
+		} else {
+			// we have a fixed minimal path length
+			checkedLength = minLength - 1;
 		}
-		debug("ended",checkedLength, result);
 
         //If there are no results, there will never be any. If there are enough, then we just return them:
         if (checkedLength < 0 || result.size() >= k) {
