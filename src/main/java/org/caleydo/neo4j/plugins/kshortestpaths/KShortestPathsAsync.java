@@ -149,19 +149,25 @@ public class KShortestPathsAsync {
 		if (id != null) {
 			r = Iterables.iterable(db.getNodeById(id.longValue())).iterator();
 		} else {
-			StringBuilder b = new StringBuilder();
-			List<String> labels = PathConstraints.findAndLabels(constraint);
-			b.append("MATCH (n");
-			if (!labels.isEmpty()) {
-				b.append(':').append(StringUtils.join(labels,':'));
-			}
-			b.append(") WHERE ");
-			constraint.toCypher(b, "n");
-			b.append(" RETURN n");
-			System.out.println(constraint+" "+b.toString());
-			r = db.execute(b.toString()).columnAs("n");
+			r = resolveNodes(constraint, db);
 		}
 		return new FakeNode(dir == Direction.OUTGOING ? 1 << 20 : 3 << 20, db, dir, r);
+	}
+
+	private static Iterator<Node> resolveNodes(IConstraint constraint, FakeGraphDatabase db) {
+		Iterator<Node> r;
+		StringBuilder b = new StringBuilder();
+		List<String> labels = PathConstraints.findAndLabels(constraint);
+		b.append("MATCH (n");
+		if (!labels.isEmpty()) {
+			b.append(':').append(StringUtils.join(labels,':'));
+		}
+		b.append(") WHERE ");
+		constraint.toCypher(b, "n");
+		b.append(" RETURN n");
+		System.out.println(constraint+" "+b.toString());
+		r = db.execute(b.toString()).columnAs("n");
+		return r;
 	}
 
 
@@ -231,6 +237,67 @@ public class KShortestPathsAsync {
 					for (Relationship r : expander.getRelationships(n)) {
 						Map<String, Object> repr = KShortestPaths.getNodeAsMap(r.getOtherNode(n));
 						repr.put("_edge", KShortestPaths.getRelationshipAsMap(r));
+						try {
+							gson.toJson(repr, Map.class, writer);
+							writer.flush();
+						} catch (IOException e) {
+							// can't write the connection was closed -> abort
+							System.out.println("connection closed");
+							e.printStackTrace();
+							throw new ConnectionClosedException();
+						}
+					}
+				} catch (ConnectionClosedException e) {
+					System.out.println("connection closed" + e);
+					e.printStackTrace();
+					e.printStackTrace(System.out);
+				} catch (RuntimeException e) {
+					System.out.println("exception" + e);
+					e.printStackTrace();
+					e.printStackTrace(System.out);
+				} finally {
+					if (tx != null) {
+						tx.failure();
+						tx.close();
+					}
+					writer.endArray();
+					writer.flush();
+					writer.close();
+				}
+			}
+
+		};
+
+		return Response.ok().entity(stream).type(MediaType.APPLICATION_JSON).build();
+	}
+
+	@GET
+	@Path("/find")
+	public Response find(final @QueryParam("constraints") String contraints, @QueryParam("debug") Boolean debugD) {
+		final boolean debug = debugD == Boolean.TRUE;
+		StreamingOutput stream = new StreamingOutput() {
+			@Override
+			public void write(OutputStream os) throws IOException, WebApplicationException {
+				final JsonWriter writer = new JsonWriter(new OutputStreamWriter(os));
+				writer.beginArray();
+
+				Transaction tx = null;
+				try {
+					tx = graphDb.beginTx();
+
+					FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
+					CustomPathExpander expander = KShortestPaths.toExpander(contraints, db,
+							Collections.<FakeNode> emptyList());
+					expander.setDebug(debug);
+
+					Pair<IConstraint, IConstraint> c = PathConstraints
+							.getStartEndConstraints(expander.getConstraints());
+
+					Iterator<Node> nodes = resolveNodes(c.first(), db);
+					final Gson gson = new Gson();
+					while (nodes.hasNext()) {
+						Node n = nodes.next();
+						Map<String, Object> repr = KShortestPaths.getNodeAsMap(n);
 						try {
 							gson.toJson(repr, Map.class, writer);
 							writer.flush();
