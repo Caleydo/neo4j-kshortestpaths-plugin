@@ -127,7 +127,7 @@ public class PathConstraints {
 		}
 		@Override
 		public void toCypher(StringBuilder b, String var) {
-
+			// b.append("1=1");
 		}
 		@Override
 		public SortedSet<MatchRegion> matches(Path path) {
