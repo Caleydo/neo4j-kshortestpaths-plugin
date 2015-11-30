@@ -210,7 +210,7 @@ public class KShortestPathsAsync {
 
 	@GET
 	@Path("/neighborsOf/{node}")
-	public Response find(@PathParam("node") final Long node, final @QueryParam("constraints") String contraints,
+	public Response neighborOf(@PathParam("node") final Long node, final @QueryParam("constraints") String contraints,
 			@QueryParam("debug") Boolean debugD) {
 		final boolean debug = debugD == Boolean.TRUE;
 		StreamingOutput stream = new StreamingOutput() {
@@ -273,7 +273,7 @@ public class KShortestPathsAsync {
 
 	@GET
 	@Path("/find")
-	public Response find(final @QueryParam("constraints") String contraints, @QueryParam("debug") Boolean debugD) {
+	public Response findNode(final @QueryParam("constraints") String contraints, @QueryParam("debug") Boolean debugD) {
 		final boolean debug = debugD == Boolean.TRUE;
 		StreamingOutput stream = new StreamingOutput() {
 			@Override
