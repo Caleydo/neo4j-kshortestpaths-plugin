@@ -1,10 +1,11 @@
 package org.caleydo.neo4j.plugins.kshortestpaths.constraints;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 import org.neo4j.graphdb.Node;
@@ -42,22 +43,23 @@ public class CompositePathConstraint implements ICompositePathContraint, IConstr
 
 	@Override
 	public SortedSet<MatchRegion> matches(Path path) {
-		BitSet total = new BitSet();
+		// as in the JavaScript code
+		SortedSet<MatchRegion> r = new TreeSet<>();
 		if (this.isAnd) {
-			//just the intersection of the region
-			total.set(0, path.length());
 			for(IPathConstraint p: constraints) {
-				total.and(MatchRegion.toSet(p.matches(path), path.length()));
+				SortedSet<MatchRegion> tmp = p.matches(path);
+				if (tmp.isEmpty()) {
+					return Collections.emptySortedSet();
+				}
+				r.addAll(tmp);
 			}
 		} else {
 			//combine all regions to a large one
 			for(IPathConstraint p: constraints) {
-				for(MatchRegion r : p.matches(path)) {
-					r.toBits(total, path.length());
-				}
+				r.addAll(p.matches(path));
 			}
 		}
-		return MatchRegion.from(total);
+		return r;
 	}
 
 	@Override

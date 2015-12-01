@@ -132,7 +132,10 @@ public class PathConstraints {
 		@Override
 		public SortedSet<MatchRegion> matches(Path path) {
 			SortedSet<MatchRegion> r = new TreeSet<MatchRegion>();
-			r.add(new MatchRegion(0, path.length()));
+			final int l = path.length();
+			for (int i = 0; i < l; ++i) {
+				r.add(new MatchRegion(i, i));
+			}
 			return r;
 		}
 		@Override
