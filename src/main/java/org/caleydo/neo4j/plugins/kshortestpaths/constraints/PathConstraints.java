@@ -25,7 +25,7 @@ public class PathConstraints {
 			MatchRegion r = toRegion(obj.get("$region"));
 			IRegionRelationOperation op = toOperation(obj.get("$relate"));
 			return new RegionMatcher(r, parse(obj.get("$query")), op);
-		} else if (obj.containsKey("$context")) {
+		} else if (obj.containsKey("context")) {
 			return parseElem(obj);
 		} else if (obj.containsKey("$and")) {
 			return new CompositePathConstraint(true, asList(obj.get("$and")));
@@ -86,7 +86,7 @@ public class PathConstraints {
 	}
 
 	private static IPathConstraint parseElem(Map<String, Object> obj) {
-		String c = Objects.toString(obj.get("$context")).toLowerCase();
+		String c = Objects.toString(obj.get("context")).toLowerCase();
 		boolean isNodeContext = c.startsWith("n") || c.isEmpty();
 		ValueConstraint constraint = ValueConstraint.of(obj);
 		ISelector s;
@@ -169,10 +169,10 @@ public class PathConstraints {
 		for(IPathConstraint c : flat) {
 			if (c instanceof RegionMatcher) {
 				RegionMatcher m = (RegionMatcher)c;
-				if (m.isStartRegion()) {
+				if (m.isStartRegion() && isNodeConstraint((IConstraint) m.getConstraint())) {
 					start.add((IConstraint)m.getConstraint());
 				}
-				if (m.isEndRegion()) {
+				if (m.isEndRegion() && isNodeConstraint((IConstraint) m.getConstraint())) {
 					end.add((IConstraint)m.getConstraint());
 				}
 			}
@@ -181,13 +181,46 @@ public class PathConstraints {
 		IConstraint end_c = combine(end, false);
 
 
-		IConstraint perElem = getPerElemConstraint(p);
+		IConstraint perElem = getPerNodeConstraint(p);
 		if (perElem != null && perElem != TRUE) {
 			start_c = combine(Arrays.asList(start_c, perElem),true);
 			end_c = combine(Arrays.asList(end_c, perElem),true);
 		}
 
 		return Pair.of(start_c, end_c);
+	}
+
+	private static boolean isNodeConstraint(IConstraint c) {
+		if (c instanceof CompositePathConstraint) {
+			for(IPathConstraint pi : ((CompositePathConstraint)c).children()) {
+				if (!isNodeConstraint((IConstraint) pi)) {
+					return false;
+				}
+			}
+		}
+		if (c instanceof TrueConstraint) {
+			return true;
+		}
+		if (c instanceof ElemConstraint)
+			return ((ElemConstraint) c).isNodeContext();
+		return false; // unknown
+	}
+
+	public static IConstraint getPerNodeConstraint(IPathConstraint p) {
+		if (p instanceof ElemConstraint && ((ElemConstraint) p).isNodeContext()) {
+			return (IConstraint) p;
+		}
+		if (p instanceof CompositePathConstraint && ((CompositePathConstraint) p).isAnd) {
+			List<IConstraint> r = new ArrayList<IConstraint>();
+			for (IPathConstraint pi : ((CompositePathConstraint) p).children()) {
+				IConstraint ri = getPerNodeConstraint(pi);
+				if (ri != null && ri != TRUE) {
+					r.add(ri);
+				}
+			}
+			return combine(r, true);
+		}
+		return TRUE;
 	}
 
 	//just and and direct elem constraints
