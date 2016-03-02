@@ -232,8 +232,14 @@ public class AppTest extends TestCase {
 	 */
 	public void test0_2() {
 		FakeGraphDatabase db = new FakeGraphDatabase(graphDb);
-		run(_0, _2, 100, "{'inline': {'flag': 'isSet', 'undirectional': false, 'toaggregate': 'name', 'aggregate': 'sets', 'inline': 'consistsOf', 'type': 'to'}, 'dir': {'to': 'out', 'consistsOf': 'in'}}");
-		run(_0, _4, 100, "{'inline': {'flag': 'isSet', 'undirectional': false, 'toaggregate': 'name', 'aggregate': 'sets', 'inline': 'consistsOf', 'type': 'to'}, 'dir': {'to': 'out', 'consistsOf': 'in'}}");
+		run(_0,
+				_2,
+				100,
+				"{'inline': {'flag': 'isSet', 'undirectional': false, 'toaggregate': 'name', 'aggregate': { 'sets': 'sets'}, 'inline': 'consistsOf', 'type': 'to'}, 'dir': {'to': 'out', 'consistsOf': 'in'}}");
+		run(_0,
+				_4,
+				100,
+				"{'inline': {'flag': 'isSet', 'undirectional': false, 'toaggregate': 'name', 'aggregate': { 'sets': 'sets' }, 'inline': 'consistsOf', 'type': 'to'}, 'dir': {'to': 'out', 'consistsOf': 'in'}}");
 		System.out.println("just NetworkNodes");
 		//run(_0, _2, 100, new CustomPathExpander(DirectionContraints.of("to", Direction.OUTGOING, "consistsOf", Direction.INCOMING), PathConstraints.parse(null),inline, new ArrayList<FakeNode>()));
 		System.out.println("just NetworkNodes and real isNet edges");
