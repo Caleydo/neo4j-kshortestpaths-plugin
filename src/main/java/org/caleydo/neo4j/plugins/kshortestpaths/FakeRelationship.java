@@ -7,6 +7,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.helpers.collection.MapUtil;
 
 /**
  * a faked relationship
@@ -150,6 +151,20 @@ public class FakeRelationship implements Relationship {
 	@Override
 	public String toString() {
 		return "FakeRelationship[" + this.getId() + this.getStartNode()+" "+this.getEndNode()+ "]";
+	}
+
+	@Override
+	public Map<String, Object> getProperties(String... keys) {
+		MapUtil.MapBuilder<String, Object> builder = new MapUtil.MapBuilder<>();
+		for (String key : keys) {
+			builder.entry(key, this.properties.get(key));
+		}
+		return builder.create();		
+	}
+
+	@Override
+	public Map<String, Object> getAllProperties() {
+		return this.properties;
 	}
 
 }

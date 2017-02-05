@@ -21,8 +21,8 @@ public class NotPathConstraint implements ICompositePathContraint, IConstraint {
 	}
 	
 	@Override
-	public boolean accept(Path path) {
-		return ! this.constraint.accept(path);
+	public boolean test(Path path) {
+		return ! this.constraint.test(path);
 	}
 	
 	@Override

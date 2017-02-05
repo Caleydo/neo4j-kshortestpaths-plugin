@@ -5,10 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang.StringUtils;
-import org.neo4j.helpers.Function;
-import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.Iterables;
 
 public abstract class ValueConstraint implements Predicate<Object>{
@@ -25,7 +25,7 @@ public abstract class ValueConstraint implements Predicate<Object>{
 	}
 	
 	@Override
-	public final boolean accept(Object value) {
+	public final boolean test(Object value) {
 		//convert single value arrays to an array
 		if (isArray(value) && ((Object[])value).length == 1) {
 			value = ((Object[])value)[0];
@@ -81,10 +81,10 @@ public abstract class ValueConstraint implements Predicate<Object>{
 	}
 	
 	public static ValueConstraint and(Iterable<ValueConstraint> cs) {
-		return new CombinePredicate(true, Iterables.toList(cs));
+		return new CombinePredicate(true, Iterables.asList(cs));
 	}
 	public static ValueConstraint or(Iterable<ValueConstraint> cs) {
-		return new CombinePredicate(false, Iterables.toList(cs));
+		return new CombinePredicate(false, Iterables.asList(cs));
 	}
 	public static ValueConstraint not(ValueConstraint cs) {
 		return new NotPredicate(cs);
@@ -136,7 +136,7 @@ public abstract class ValueConstraint implements Predicate<Object>{
 		@Override
 		protected boolean acceptImpl(Object value) {
 			for(ValueConstraint c : cs) {
-				if (isAnd != c.accept(value)) {
+				if (isAnd != c.test(value)) {
 					return !isAnd;
 				}
 			}

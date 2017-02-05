@@ -2,6 +2,7 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -14,11 +15,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.ReturnableEvaluator;
-import org.neo4j.graphdb.StopEvaluator;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.Traverser;
-import org.neo4j.graphdb.Traverser.Order;
 import org.neo4j.graphdb.event.KernelEventHandler;
 import org.neo4j.graphdb.event.TransactionEventHandler;
 import org.neo4j.graphdb.index.IndexManager;
@@ -72,23 +69,6 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 			return (Relationship) fakes.get(id);
 		}
 		return w.getRelationshipById(id);
-	}
-
-
-	@Override
-	public Iterable<Node> getAllNodes() {
-		return w.getAllNodes();
-	}
-
-	@Override
-	public ResourceIterable<Node> findNodesByLabelAndProperty(Label label,
-			String key, Object value) {
-		return w.findNodesByLabelAndProperty(label, key, value);
-	}
-
-	@Override
-	public Iterable<RelationshipType> getRelationshipTypes() {
-		return w.getRelationshipTypes();
 	}
 
 	@Override
@@ -307,37 +287,6 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 		}
 
 		@Override
-		public Traverser traverse(Order traversalOrder,
-				StopEvaluator stopEvaluator,
-				ReturnableEvaluator returnableEvaluator,
-				RelationshipType relationshipType, Direction direction) {
-			return w.traverse(traversalOrder, stopEvaluator,
-					returnableEvaluator, relationshipType, direction);
-		}
-
-		@Override
-		public Traverser traverse(Order traversalOrder,
-				StopEvaluator stopEvaluator,
-				ReturnableEvaluator returnableEvaluator,
-				RelationshipType firstRelationshipType,
-				Direction firstDirection,
-				RelationshipType secondRelationshipType,
-				Direction secondDirection) {
-			return w.traverse(traversalOrder, stopEvaluator,
-					returnableEvaluator, firstRelationshipType, firstDirection,
-					secondRelationshipType, secondDirection);
-		}
-
-		@Override
-		public Traverser traverse(Order traversalOrder,
-				StopEvaluator stopEvaluator,
-				ReturnableEvaluator returnableEvaluator,
-				Object... relationshipTypesAndDirections) {
-			return w.traverse(traversalOrder, stopEvaluator,
-					returnableEvaluator, relationshipTypesAndDirections);
-		}
-
-		@Override
 		public void addLabel(Label label) {
 			w.addLabel(label);
 		}
@@ -380,6 +329,16 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 		@Override
 		public int getDegree(RelationshipType type, Direction direction) {
 			return w.getDegree(type, direction);
+		}
+
+		@Override
+		public Map<String, Object> getProperties(String... keys) {
+			return w.getProperties(keys);
+		}
+
+		@Override
+		public Map<String, Object> getAllProperties() {
+			return w.getProperties();
 		}		
 	}
 
@@ -408,6 +367,51 @@ public class FakeGraphDatabase implements GraphDatabaseService {
 	public ResourceIterator<Node> findNodes(Label label) {
 		return w.findNodes(label);
 	}
+
+	@Override
+	public ResourceIterable<Node> getAllNodes() {
+		return w.getAllNodes();
+	}
+
+	public ResourceIterable<Relationship> getAllRelationships() {
+		return w.getAllRelationships();
+	}
+
+	public ResourceIterable<Label> getAllLabelsInUse() {
+		return w.getAllLabelsInUse();
+	}
+
+	public ResourceIterable<RelationshipType> getAllRelationshipTypesInUse() {
+		return w.getAllRelationshipTypesInUse();
+	}
+
+	public ResourceIterable<Label> getAllLabels() {
+		return w.getAllLabels();
+	}
+
+	public ResourceIterable<RelationshipType> getAllRelationshipTypes() {
+		return w.getAllRelationshipTypes();
+	}
+
+	public ResourceIterable<String> getAllPropertyKeys() {
+		return w.getAllPropertyKeys();
+	}
+
+	public Transaction beginTx(long timeout, TimeUnit unit) {
+		return w.beginTx(timeout, unit);
+	}
+
+	public Result execute(String query, long timeout, TimeUnit unit)
+			throws QueryExecutionException {
+		return w.execute(query, timeout, unit);
+	}
+
+	public Result execute(String query, Map<String, Object> parameters,
+			long timeout, TimeUnit unit) throws QueryExecutionException {
+		return w.execute(query, parameters, timeout, unit);
+	}
+
+	
 	
 	
 }

@@ -32,9 +32,9 @@ public class CompositePathConstraint implements ICompositePathContraint, IConstr
 	}
 
 	@Override
-	public boolean accept(Path path) {
+	public boolean test(Path path) {
 		for(IPathConstraint c : constraints) {
-			if (isAnd != c.accept(path)) {
+			if (isAnd != c.test(path)) {
 				return !isAnd;
 			}
 		}

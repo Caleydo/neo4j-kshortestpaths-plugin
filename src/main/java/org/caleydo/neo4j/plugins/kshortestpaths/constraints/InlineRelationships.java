@@ -8,18 +8,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeGraphDatabase;
 import org.caleydo.neo4j.plugins.kshortestpaths.FakeRelationship;
-import org.neo4j.function.Function;
-import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.collection.Iterables;
+import org.neo4j.helpers.collection.Pair;
 
 public class InlineRelationships {
 	private final RelationshipType type;
@@ -119,7 +118,7 @@ public class InlineRelationships {
 		if (desc == null) {
 			return null;
 		}
-		DynamicRelationshipType type = DynamicRelationshipType.withName(desc.get("inline").toString());
+		RelationshipType type = RelationshipType.withName(desc.get("inline").toString());
 		boolean undirectional = Objects.equals(desc.get("undirectional"),Boolean.TRUE);
 		long notInlineId = desc.containsKey("dontInline") ? ((Number)desc.get("dontInline")).longValue() : -1;
 		IFakeRelationshipFactory factory = toFactory(desc, db);
@@ -127,7 +126,7 @@ public class InlineRelationships {
 	}
 
 	private static IFakeRelationshipFactory toFactory(Map<String, Object> desc, FakeGraphDatabase db) {
-		return new FakeSetRelationshipFactory(desc.get("flag").toString(), (Map<String, String>) desc.get("aggregate"), desc.get("toaggregate").toString(), DynamicRelationshipType.withName(desc.get("type").toString()), db);
+		return new FakeSetRelationshipFactory(desc.get("flag").toString(), (Map<String, String>) desc.get("aggregate"), desc.get("toaggregate").toString(), RelationshipType.withName(desc.get("type").toString()), db);
 	}
 
 
@@ -191,7 +190,7 @@ public class InlineRelationships {
 				}
 			}
 			for(String key : m.keySet()) {
-				properties.put(key.toString(), Iterables.toArray(String.class, m.get(key)));
+				properties.put(key.toString(), Iterables.asArray(String.class, m.get(key)));
 			}
 			Relationship rel = new FakeRelationship(source.getGraphDatabase(),type, reverse ? target : source, reverse ? source : target, properties);
 			w.putFake(rel);

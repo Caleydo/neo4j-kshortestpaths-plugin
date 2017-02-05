@@ -12,7 +12,7 @@ import java.util.TreeSet;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.helpers.Pair;
+import org.neo4j.helpers.collection.Pair;
 
 public class PathConstraints {
 	public static final IPathConstraint acyclic = new ACyclicPathConstraint();
@@ -139,7 +139,7 @@ public class PathConstraints {
 			return r;
 		}
 		@Override
-		public boolean accept(Path path) {
+		public boolean test(Path path) {
 			return true;
 		}
 	}

@@ -14,18 +14,16 @@ import junit.framework.TestSuite;
 
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphalgo.WeightedPath;
-import org.neo4j.graphdb.DynamicLabel;
-import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.collection.Iterables;
-import org.neo4j.tooling.GlobalGraphOperations;
+import org.neo4j.helpers.collection.Pair;
 /**
  * Unit test for simple App.
  */
@@ -45,8 +43,8 @@ public class AppTest extends TestCase {
 	public Node _7 = null;
 
 
-	RelationshipType consistsOf = DynamicRelationshipType.withName("consistsOf");
-	RelationshipType to = DynamicRelationshipType.withName("to");
+	RelationshipType consistsOf = RelationshipType.withName("consistsOf");
+	RelationshipType to = RelationshipType.withName("to");
 
 	/**
 	 * Create the test case
@@ -80,13 +78,12 @@ public class AppTest extends TestCase {
 		} catch (IOException e) {
 			Assert.assertTrue("IOException: " + e.getMessage(), false);
 		}
-		graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder("test_neo4j_db/")
+		graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(new File("test_neo4j_db/"))
 				.setConfig(GraphDatabaseSettings.keep_logical_logs, "false")
 				.setConfig(GraphDatabaseSettings.allow_store_upgrade, "true").newGraphDatabase();
 		Transaction txClearGraph = graphDb.beginTx();
 		try {
-			GlobalGraphOperations ggo = GlobalGraphOperations.at(graphDb);
-			for (Node nToDelete : ggo.getAllNodes()) {
+			for (Node nToDelete : graphDb.getAllNodes()) {
 				for (Relationship relToDelete : nToDelete.getRelationships()) {
 					relToDelete.delete();
 				}
@@ -167,12 +164,12 @@ public class AppTest extends TestCase {
 	}
 
 	private Node createSetNode(String name) {
-		Node n = graphDb.createNode(DynamicLabel.label("SetNode"));
+		Node n = graphDb.createNode(Label.label("SetNode"));
 		n.setProperty("name", name);
 		return n;
 	}
 	private Node createNode(String name) {
-		Node n = graphDb.createNode(DynamicLabel.label("NetworkNode"));
+		Node n = graphDb.createNode(Label.label("NetworkNode"));
 		n.setProperty("name", name);
 		n.setProperty("sets", new String[0]);
 		return n;
