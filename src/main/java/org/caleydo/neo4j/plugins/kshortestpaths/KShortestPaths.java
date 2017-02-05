@@ -96,8 +96,8 @@ public class KShortestPaths extends ServerPlugin {
 		if (start ==0 && end == -1) {
 			return path;
 		}
-		List<Node> nodes = Iterables.toList(path.nodes());
-		List<Relationship> rels = Iterables.toList(path.relationships());
+		List<Node> nodes = Iterables.asList(path.nodes());
+		List<Relationship> rels = Iterables.asList(path.relationships());
 		return new MyPath(nodes.subList(start, end < 0 ? nodes.size()+end+1: end),rels.subList(start, end < 0 ? rels.size()+end+1 : end));
 	}
 

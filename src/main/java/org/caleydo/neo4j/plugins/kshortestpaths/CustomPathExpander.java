@@ -2,6 +2,7 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.DirectionContraints;
@@ -14,7 +15,6 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.traversal.BranchState;
-import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.FilteringIterable;
 import org.neo4j.helpers.collection.Iterables;
 
@@ -57,8 +57,8 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 	}
 	
 	@Override
-	public boolean accept(Path item) {
-		return constraints.accept(item);
+	public boolean test(Path item) {
+		return constraints.test(item);
 	}
 	
 	
@@ -92,9 +92,9 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 		}
 		try {
 			Iterable<Relationship> base = getRelationships(endNode);
-			List<Relationship> s = Iterables.toList(new FilteringIterable<>(base, new Predicate<Relationship>() {
+			List<Relationship> s = Iterables.asList(new FilteringIterable<>(base, new Predicate<Relationship>() {
 				@Override
-				public boolean accept(Relationship item) {
+				public boolean test(Relationship item) {
 					Node added = item.getOtherNode(endNode);
 					for(FakeNode n : extraNodes) { //keep fake nodes
 						if (n.equals(added)) {
@@ -125,14 +125,14 @@ public class CustomPathExpander implements PathExpander<Object>, Predicate<Path>
 
 
 	public Iterable<Relationship> getRelationships(final Node node) {
-		Iterable<Relationship> base = Iterables.toList(this.directions.filter(node));
+		Iterable<Relationship> base = Iterables.asList(this.directions.filter(node));
 		for(FakeNode n : extraNodes) {
 			if (n.hasRelationship(node)) {
 				debug("add fake relationship back"+n+" "+node);
 				base = Iterables.concat(base, Iterables.iterable(n.getRelationship(node)));
 			}
 		}
-		debug("rels: "+Iterables.toList(base));
+		debug("rels: "+Iterables.asList(base));
 		if (inline != null) {
 			base = inline.inline(base, node);
 		}

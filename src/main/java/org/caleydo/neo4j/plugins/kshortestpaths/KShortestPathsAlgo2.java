@@ -2,15 +2,15 @@ package org.caleydo.neo4j.plugins.kshortestpaths;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang.StringUtils;
-import org.neo4j.function.Function;
 import org.neo4j.graphalgo.GraphAlgoFactory;
 import org.neo4j.graphalgo.impl.util.WeightedPathImpl;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
-import org.neo4j.helpers.Predicate;
 
 public class KShortestPathsAlgo2 {
 
@@ -46,7 +46,7 @@ public class KShortestPathsAlgo2 {
 				checkedLength = path.length(); // we have checked this length but may not accept it
 				path = mapper.apply(path);
 				debug("here", path);
-				if (!pathAccepter.accept(path)) {
+				if (!pathAccepter.test(path)) {
 					debug("dimiss", path);
 					continue; // dismiss result
 				}
@@ -79,7 +79,7 @@ public class KShortestPathsAlgo2 {
         	debug("check depth: ",depth);
 			for (Path path : GraphAlgoFactory.pathsWithLength(expander, depth).findAllPaths(start, end)) {
         		path = mapper.apply(path);
-        		if (!pathAccepter.accept(path)) {
+        		if (!pathAccepter.test(path)) {
     				debug("dimiss length "+depth,path);
     				continue; //dismiss result
     			}

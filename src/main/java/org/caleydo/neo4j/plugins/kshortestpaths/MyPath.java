@@ -60,7 +60,7 @@ public class MyPath implements Path {
 
 	@Override
 	public Iterator<PropertyContainer> iterator() {
-		return Iterables.concat(nodes, rels).iterator();
+		return Iterables.<PropertyContainer>concat(nodes, rels).iterator();
 	}
 
 	@Override

@@ -44,11 +44,11 @@ public class ElemConstraint implements IConstraint, IPathConstraint, ISubPathCon
 			return true;
 		}
 		Object value = selector.get(c);
-		return constraint.accept(value);
+		return constraint.test(value);
 	}
 
 	@Override
-	public boolean accept(Path path) {
+	public boolean test(Path path) {
 		int c = 0;
 		if (nodeContext) {
 			for(Node node : path.nodes()) {

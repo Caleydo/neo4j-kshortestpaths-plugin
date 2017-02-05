@@ -12,7 +12,7 @@ import org.neo4j.graphdb.Path;
 public class ACyclicPathConstraint implements IPathConstraint {
 
 	@Override
-	public boolean accept(Path item) {
+	public boolean test(Path item) {
 		Set<Long> used = new HashSet<>();
 		for(Node node : item.nodes()) {
 			long id = node.getId();
@@ -27,7 +27,7 @@ public class ACyclicPathConstraint implements IPathConstraint {
 	@Override
 	public SortedSet<MatchRegion> matches(Path path) {
 		TreeSet<MatchRegion> r = new TreeSet<>();
-		if (accept(path)) {
+		if (test(path)) {
 			r.add(new MatchRegion(0, path.length()));
 		}
 		return r;

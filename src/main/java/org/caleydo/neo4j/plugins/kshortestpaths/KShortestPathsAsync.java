@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -22,7 +23,6 @@ import org.apache.commons.lang.StringUtils;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.IConstraint;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.IPathConstraint;
 import org.caleydo.neo4j.plugins.kshortestpaths.constraints.PathConstraints;
-import org.neo4j.function.Function;
 import org.neo4j.graphalgo.CostEvaluator;
 import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.Direction;
@@ -30,8 +30,8 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.collection.Iterables;
+import org.neo4j.helpers.collection.Pair;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;

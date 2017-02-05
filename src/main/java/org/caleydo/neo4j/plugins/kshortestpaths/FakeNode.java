@@ -6,23 +6,19 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ReturnableEvaluator;
-import org.neo4j.graphdb.StopEvaluator;
-import org.neo4j.graphdb.Traverser;
-import org.neo4j.graphdb.Traverser.Order;
+import org.neo4j.graphdb.traversal.Traverser;
 import org.neo4j.helpers.collection.Iterables;
-import org.neo4j.kernel.impl.traversal.OldTraverserWrapper;
+import org.neo4j.helpers.collection.MapUtil;
 
 public class FakeNode implements Node {
 	private final long id;
 	private final FakeGraphDatabase db;
-	private final RelationshipType onlyType = DynamicRelationshipType.withName("FAKE");
+	private final RelationshipType onlyType = RelationshipType.withName("FAKE");
 	private final Direction onlyDir;
 	private Map<Long,Relationship> rels;
 
@@ -185,38 +181,6 @@ public class FakeNode implements Node {
 	}
 
 	@Override
-    public Traverser traverse( Order traversalOrder,
-                               StopEvaluator stopEvaluator, ReturnableEvaluator returnableEvaluator,
-                               RelationshipType relationshipType, Direction direction )
-    {
-        return OldTraverserWrapper.traverse( this,
-                traversalOrder, stopEvaluator,
-                returnableEvaluator, relationshipType, direction );
-    }
-
-    @Override
-    public Traverser traverse( Order traversalOrder,
-                               StopEvaluator stopEvaluator, ReturnableEvaluator returnableEvaluator,
-                               RelationshipType firstRelationshipType, Direction firstDirection,
-                               RelationshipType secondRelationshipType, Direction secondDirection )
-    {
-        return OldTraverserWrapper.traverse( this,
-                traversalOrder, stopEvaluator,
-                returnableEvaluator, firstRelationshipType, firstDirection,
-                secondRelationshipType, secondDirection );
-    }
-
-    @Override
-    public Traverser traverse( Order traversalOrder,
-                               StopEvaluator stopEvaluator, ReturnableEvaluator returnableEvaluator,
-                               Object... relationshipTypesAndDirections )
-    {
-        return OldTraverserWrapper.traverse( this,
-                traversalOrder, stopEvaluator,
-                returnableEvaluator, relationshipTypesAndDirections );
-    }
-
-	@Override
 	public void addLabel(Label label) {
 		throw new UnsupportedOperationException();
 	}
@@ -286,6 +250,16 @@ public class FakeNode implements Node {
 	@Override
 	public Iterable<RelationshipType> getRelationshipTypes() {
 		return Collections.singleton(onlyType);
+	}
+	
+	@Override
+	public Map<String, Object> getAllProperties() {
+		return Collections.emptyMap();
+	}
+
+	@Override
+	public Map<String, Object> getProperties(String... keys) {
+		return Collections.emptyMap();
 	}
 
 }

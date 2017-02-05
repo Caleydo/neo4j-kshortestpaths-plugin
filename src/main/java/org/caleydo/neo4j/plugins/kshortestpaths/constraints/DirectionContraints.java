@@ -6,11 +6,10 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.helpers.Pair;
+import org.neo4j.helpers.collection.Pair;
 import org.neo4j.helpers.collection.Iterables;
 
 public class DirectionContraints {
@@ -26,7 +25,7 @@ public class DirectionContraints {
 		List<Pair<? extends RelationshipType,Direction>> r = new ArrayList<>();
 		if (directions != null) {
 			for(Map.Entry<String,String> entry : directions.entrySet()) {
-				r.add(Pair.of(DynamicRelationshipType.withName(entry.getKey()), toDir(entry.getValue())));
+				r.add(Pair.of(RelationshipType.withName(entry.getKey()), toDir(entry.getValue())));
 			}
 		}
 		return r;
@@ -34,13 +33,13 @@ public class DirectionContraints {
 	
 	public static DirectionContraints of(String label, Direction dir) {
 		List<Pair<? extends RelationshipType,Direction>> r = new ArrayList<>();
-		r.add(Pair.of(DynamicRelationshipType.withName(label), dir));
+		r.add(Pair.of(RelationshipType.withName(label), dir));
 		return new DirectionContraints(r);
 	}
 	public static DirectionContraints of(String label, Direction dir, String label2, Direction dir2) {
 		List<Pair<? extends RelationshipType,Direction>> r = new ArrayList<>();
-		r.add(Pair.of(DynamicRelationshipType.withName(label), dir));
-		r.add(Pair.of(DynamicRelationshipType.withName(label2), dir2));
+		r.add(Pair.of(RelationshipType.withName(label), dir));
+		r.add(Pair.of(RelationshipType.withName(label2), dir2));
 		return new DirectionContraints(r);
 	}
 

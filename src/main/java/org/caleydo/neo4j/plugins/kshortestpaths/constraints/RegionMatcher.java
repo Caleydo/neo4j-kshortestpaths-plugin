@@ -28,7 +28,7 @@ public class RegionMatcher implements ICompositePathContraint, ISequenceDependen
 	}
 
 	@Override
-	public boolean accept(Path path) {
+	public boolean test(Path path) {
 		return !matches(path).isEmpty();
 	}
 
